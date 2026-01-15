@@ -1,16 +1,10 @@
-import os
 from collections.abc import Callable
 from pathlib import Path
 
-import hydra
 import pandas as pd
-from omegaconf import DictConfig
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
-
-KAGGLE_DATASET = "alessandrasala79/ai-vs-human-generated-dataset"
-
 
 class TimmImageTransform:
     """Minimal PIL-to-tensor transform without requiring torchvision."""
@@ -74,35 +68,3 @@ class MyDataset(Dataset):
         if self.target_transform is not None:
             label = self.target_transform(label)
         return image, label
-
-    def preprocess(self, output_folder: Path) -> None:
-        """Preprocess the raw data and save it to the output folder."""
-
-
-def download_dataset(output_path: str | Path) -> None:
-    """Download the AI vs Human Generated Images dataset from Kaggle.
-
-    Args:
-        output_path: Output directory for downloaded data.
-    """
-    from kaggle.api.kaggle_api_extended import KaggleApi
-
-    output_dir = Path(output_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading dataset {KAGGLE_DATASET} to {output_dir}...")
-    api = KaggleApi()
-    api.authenticate()
-    api.dataset_download_files(KAGGLE_DATASET, path=output_dir, unzip=True)
-    print("Download complete!")
-
-
-@hydra.main(config_path=str(Path(__file__).parent.parent.parent / "configs"), config_name="config", version_base=None)
-def main(cfg: DictConfig) -> None:
-    """Hydra entrypoint for data operations."""
-    output_path = cfg.data.data_dir
-    download_dataset(output_path)
-
-
-if __name__ == "__main__":
-    main()
