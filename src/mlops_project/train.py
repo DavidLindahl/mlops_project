@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
+import hydra
 import torch
+from tqdm import tqdm
+from omegaconf import DictConfig
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
@@ -11,23 +13,6 @@ from torch.utils.data import DataLoader, random_split
 
 from mlops_project.data import MyDataset
 from mlops_project.model import Model
-
-
-@dataclass(frozen=True)
-class TrainConfig:
-    """Configuration for model training."""
-
-    data_dir: Path = Path("data/raw")
-    output_dir: Path = Path("models")
-    model_name: str = "tf_efficientnetv2_s.in21k_ft_in1k"
-    batch_size: int = 16
-    num_epochs: int = 3
-    num_workers: int = 0
-    lr: float = 3e-4
-    weight_decay: float = 1e-2
-    val_fraction: float = 0.1
-    seed: int = 42
-    device: str | None = None
 
 
 class ViTImageTransform:
@@ -57,13 +42,17 @@ def _seed_everything(seed: int) -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-def train(config: TrainConfig | None = None) -> None:
+def train_model(cfg: DictConfig) -> None:
     """Train a 2-class timm classifier on the dataset in `data/raw`."""
-    config = config or TrainConfig()
-    device = _infer_device(config.device)
-    _seed_everything(config.seed)
+    data_dir = Path(cfg.data.data_dir)
+    device = _infer_device(cfg.train.device)
+    _seed_everything(cfg.train.seed)
 
-    model = Model(model_name=config.model_name, num_classes=2, pretrained=True).to(device)
+    model = Model(
+        model_name=cfg.model.model_name,
+        num_classes=cfg.model.num_classes,
+        pretrained=cfg.model.pretrained,
+    ).to(device)
     data_config = model.data_config
     input_size = data_config["input_size"]
     transform = ViTImageTransform(
@@ -73,47 +62,48 @@ def train(config: TrainConfig | None = None) -> None:
     )
     target_transform = lambda y: int(y)  # noqa: E731
 
-    dataset = MyDataset(config.data_dir, transform=transform, target_transform=target_transform)
-    val_size = max(1, int(len(dataset) * config.val_fraction))
+    dataset = MyDataset(data_dir, transform=transform, target_transform=target_transform)
+    val_size = max(1, int(len(dataset) * cfg.train.val_fraction))
     train_size = len(dataset) - val_size
     train_ds, val_ds = random_split(
         dataset,
         lengths=[train_size, val_size],
-        generator=torch.Generator().manual_seed(config.seed),
+        generator=torch.Generator().manual_seed(cfg.train.seed),
     )
 
     train_loader = DataLoader(
         train_ds,
-        batch_size=config.batch_size,
+        batch_size=cfg.train.batch_size,
         shuffle=True,
-        num_workers=config.num_workers,
+        num_workers=cfg.data.num_workers,
         pin_memory=(device.type == "cuda"),
     )
     val_loader = DataLoader(
         val_ds,
-        batch_size=config.batch_size,
+        batch_size=cfg.train.batch_size,
         shuffle=False,
-        num_workers=config.num_workers,
+        num_workers=cfg.data.num_workers,
         pin_memory=(device.type == "cuda"),
     )
 
-    LR = config.lr
-    optimizer = Adam(model.parameters(), lr=LR, weight_decay=config.weight_decay)
-    scheduler = StepLR(optimizer, step_size=1, gamma=0.1)
+    optimizer = Adam(model.parameters(), lr=cfg.train.lr, weight_decay=cfg.train.weight_decay)
+    scheduler = StepLR(optimizer, step_size=cfg.train.step_size, gamma=cfg.train.gamma)
     loss_fn = nn.CrossEntropyLoss()
 
-    config.output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir = Path(cfg.train.checkpoint_dir)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
     best_val_acc = -1.0
-    safe_name = config.model_name.replace("/", "_").replace(".", "_")
-    best_path = config.output_dir / f"{safe_name}_best.pt"
+    safe_name = cfg.model.model_name.replace("/", "_").replace(".", "_")
+    best_path = checkpoint_dir / f"{safe_name}_best.pt"
 
-    for epoch in range(config.num_epochs):
+    for epoch in range(cfg.train.num_epochs):
         model.train()
         train_loss = 0.0
         train_correct = 0
         train_total = 0
 
-        for images, labels in train_loader:
+        train_bar = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{cfg.train.num_epochs} [train]")
+        for images, labels in train_bar:
             images = images.to(device, non_blocking=True)
             labels = torch.as_tensor(labels, dtype=torch.long, device=device)
 
@@ -127,6 +117,7 @@ def train(config: TrainConfig | None = None) -> None:
             preds = logits.argmax(dim=1)
             train_correct += (preds == labels).sum().item()
             train_total += images.size(0)
+            train_bar.set_postfix(loss=loss.item())
 
         scheduler.step()
 
@@ -135,7 +126,8 @@ def train(config: TrainConfig | None = None) -> None:
         val_correct = 0
         val_total = 0
         with torch.no_grad():
-            for images, labels in val_loader:
+            val_bar = tqdm(val_loader, desc=f"Epoch {epoch + 1}/{cfg.train.num_epochs} [val]")
+            for images, labels in val_bar:
                 images = images.to(device, non_blocking=True)
                 labels = torch.as_tensor(labels, dtype=torch.long, device=device)
                 logits = model(images)
@@ -145,6 +137,7 @@ def train(config: TrainConfig | None = None) -> None:
                 preds = logits.argmax(dim=1)
                 val_correct += (preds == labels).sum().item()
                 val_total += images.size(0)
+                val_bar.set_postfix(loss=loss.item())
 
         train_loss /= max(1, train_total)
         train_acc = train_correct / max(1, train_total)
@@ -152,25 +145,29 @@ def train(config: TrainConfig | None = None) -> None:
         val_acc = val_correct / max(1, val_total)
 
         print(
-            f"Epoch {epoch + 1}/{config.num_epochs} | "
+            f"Epoch {epoch + 1}/{cfg.train.num_epochs} | "
             f"train loss {train_loss:.4f} acc {train_acc:.4f} | "
             f"val loss {val_loss:.4f} acc {val_acc:.4f}"
         )
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(
-                {
-                    "model_name": config.model_name,
-                    "num_classes": 2,
-                    "state_dict": model.state_dict(),
-                    "epoch": epoch + 1,
-                    "val_acc": val_acc,
-                    "config": config,
-                },
-                best_path,
-            )
+            checkpoint = {
+                "model_name": cfg.model.model_name,
+                "num_classes": cfg.model.num_classes,
+                "state_dict": model.state_dict(),
+                "epoch": epoch + 1,
+                "val_acc": val_acc,
+            }
+            torch.save(checkpoint, best_path)
             print(f"Saved best checkpoint to {best_path} (val acc {val_acc:.4f})")
 
+
+@hydra.main(config_path=str(Path(__file__).parent.parent.parent / "configs"), config_name="config", version_base=None)
+def main(cfg: DictConfig) -> None:
+    """Hydra entrypoint for training."""
+    train_model(cfg)
+
+
 if __name__ == "__main__":
-    train()
+    main()

@@ -1,0 +1,6 @@
+defaults:
+  - data
+  - model
+  - train
+  - logging
+  - _self_

@@ -178,3 +178,7 @@ cython_debug/
 
 # data
 data/raw/
+
+# Logging
+outputs/
+reports/

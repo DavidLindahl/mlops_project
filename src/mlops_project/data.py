@@ -1,14 +1,12 @@
 import os
-import zipfile
 from collections.abc import Callable
 from pathlib import Path
 
+import hydra
 import pandas as pd
-import typer
+from omegaconf import DictConfig
 from PIL import Image
 from torch.utils.data import Dataset
-
-app = typer.Typer()
 
 KAGGLE_DATASET = "alessandrasala79/ai-vs-human-generated-dataset"
 
@@ -55,11 +53,12 @@ class MyDataset(Dataset):
         """Preprocess the raw data and save it to the output folder."""
 
 
-@app.command()
-def download(
-    output_path: str = typer.Option("data/raw", "--output", "-o", help="Output directory for downloaded data"),
-) -> None:
-    """Download the AI vs Human Generated Images dataset from Kaggle."""
+def download_dataset(output_path: str | Path) -> None:
+    """Download the AI vs Human Generated Images dataset from Kaggle.
+
+    Args:
+        output_path: Output directory for downloaded data.
+    """
     from kaggle.api.kaggle_api_extended import KaggleApi
 
     output_dir = Path(output_path)
@@ -72,8 +71,12 @@ def download(
     print("Download complete!")
 
 
-
+@hydra.main(config_path=str(Path(__file__).parent.parent.parent / "configs"), config_name="config", version_base=None)
+def main(cfg: DictConfig) -> None:
+    """Hydra entrypoint for data operations."""
+    output_path = cfg.data.data_dir
+    download_dataset(output_path)
 
 
 if __name__ == "__main__":
-    app()
+    main()
