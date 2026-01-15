@@ -29,7 +29,7 @@ class TimmImageTransform:
 
 
 class MyDataset(Dataset):
-    """My custom dataset."""
+    """My custom dataset for AI vs Human generated images."""
 
     def __init__(
         self,
@@ -52,12 +52,21 @@ class MyDataset(Dataset):
         self.target_transform = target_transform
 
     def __len__(self) -> int:
-        """Return the length of the dataset."""
+        """Return the number of samples in the dataset."""
         return len(self.annotations)
 
-    def __getitem__(self, index: int):
-        """Return a given sample from the dataset."""
-        image_path = os.path.join(self.data_path, self.annotations.iloc[index]["file_name"])
+    def __getitem__(self, index: int) -> tuple:
+        """Return a sample from the dataset.
+
+        Args:
+            index: Index of the sample to return.
+
+        Returns:
+            Tuple of (image, label) where image is a PIL Image.
+        """
+        img_name = self.annotations.iloc[index]["file_name"]
+        image_path = self.data_path / img_name
+
         image = Image.open(image_path).convert("RGB")
         label = self.annotations.iloc[index]["label"]
         if self.transform is not None:
