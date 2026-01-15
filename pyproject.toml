@@ -39,6 +39,7 @@ dev = [
     "mypy==1.19.1",
     "mkdocs-material==9.7.1",
     "mkdocstrings-python==2.0.1",
+    "pillow>=12.1.0",
 ]
 
 
@@ -60,6 +61,14 @@ data = "mlops_project.data:app"
 
 [tool.ruff]
 line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
 
 [tool.coverage.run]
 omit = ["tests/*"]

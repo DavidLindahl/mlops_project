@@ -1,5 +1,4 @@
 import os
-import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -49,9 +48,6 @@ def download(
     api.authenticate()
     api.dataset_download_files(KAGGLE_DATASET, path=output_dir, unzip=True)
     print("Download complete!")
-
-
-
 
 
 if __name__ == "__main__":
