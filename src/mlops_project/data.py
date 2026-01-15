@@ -1,11 +1,15 @@
 import os
+import zipfile
 from pathlib import Path
+
 import pandas as pd
 import typer
 from PIL import Image
 from torch.utils.data import Dataset
 
 app = typer.Typer()
+
+KAGGLE_DATASET = "alessandrasala79/ai-vs-human-generated-dataset"
 
 
 class MyDataset(Dataset):
@@ -31,14 +35,23 @@ class MyDataset(Dataset):
 
 
 @app.command()
-def preprocess(
-    output_folder: str = typer.Argument(..., help="Output folder for processed data"),
-    data_path: str = typer.Option("data/raw", "--data-path", "-d", help="Path to raw data"),
+def download(
+    output_path: str = typer.Option("data/raw", "--output", "-o", help="Output directory for downloaded data"),
 ) -> None:
-    """Preprocess the raw data and save it to the output folder."""
-    print("Preprocessing data...")
-    dataset = MyDataset(Path(data_path))
-    dataset.preprocess(Path(output_folder))
+    """Download the AI vs Human Generated Images dataset from Kaggle."""
+    from kaggle.api.kaggle_api_extended import KaggleApi
+
+    output_dir = Path(output_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading dataset {KAGGLE_DATASET} to {output_dir}...")
+    api = KaggleApi()
+    api.authenticate()
+    api.dataset_download_files(KAGGLE_DATASET, path=output_dir, unzip=True)
+    print("Download complete!")
+
+
+
 
 
 if __name__ == "__main__":
