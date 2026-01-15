@@ -177,5 +177,4 @@ cython_debug/
 #.idea/
 
 # Logging
-outputs/
 reports/
