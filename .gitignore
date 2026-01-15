@@ -177,7 +177,7 @@ cython_debug/
 #.idea/
 
 # data
-data/raw/
+data/
 
 # Logging
 outputs/

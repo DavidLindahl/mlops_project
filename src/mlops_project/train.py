@@ -15,24 +15,8 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, random_split
 
-from mlops_project.data import MyDataset
+from mlops_project.data import MyDataset, TimmImageTransform
 from mlops_project.model import Model
-
-
-class ViTImageTransform:
-    """Minimal PIL->Tensor transform without requiring torchvision."""
-
-    def __init__(self, image_size: int, mean: list[float], std: list[float]) -> None:
-        self.image_size = image_size
-        self.mean = torch.tensor(mean, dtype=torch.float32).view(3, 1, 1)
-        self.std = torch.tensor(std, dtype=torch.float32).view(3, 1, 1)
-
-    def __call__(self, image) -> torch.Tensor:
-        image = image.resize((self.image_size, self.image_size))
-        byte_tensor = torch.ByteTensor(torch.ByteStorage.from_buffer(image.tobytes()))
-        x = byte_tensor.view(self.image_size, self.image_size, 3).permute(2, 0, 1).contiguous()
-        x = x.to(dtype=torch.float32).div_(255.0)
-        return (x - self.mean) / self.std
 
 
 def _infer_device(requested: str | None) -> torch.device:
@@ -65,7 +49,7 @@ def train_model(cfg: DictConfig) -> None:
     ).to(device)
     data_config = model.data_config
     input_size = data_config["input_size"]
-    transform = ViTImageTransform(
+    transform = TimmImageTransform(
         image_size=int(input_size[-1]),
         mean=list(data_config["mean"]),
         std=list(data_config["std"]),

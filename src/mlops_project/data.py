@@ -6,9 +6,26 @@ import hydra
 import pandas as pd
 from omegaconf import DictConfig
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 
 KAGGLE_DATASET = "alessandrasala79/ai-vs-human-generated-dataset"
+
+
+class TimmImageTransform:
+    """Minimal PIL-to-tensor transform without requiring torchvision."""
+
+    def __init__(self, image_size: int, mean: list[float], std: list[float]) -> None:
+        self.image_size = image_size
+        self.mean = torch.tensor(mean, dtype=torch.float32).view(3, 1, 1)
+        self.std = torch.tensor(std, dtype=torch.float32).view(3, 1, 1)
+
+    def __call__(self, image: Image.Image) -> torch.Tensor:
+        image = image.resize((self.image_size, self.image_size))
+        byte_tensor = torch.ByteTensor(torch.ByteStorage.from_buffer(image.tobytes()))
+        x = byte_tensor.view(self.image_size, self.image_size, 3).permute(2, 0, 1).contiguous()
+        x = x.to(dtype=torch.float32).div_(255.0)
+        return (x - self.mean) / self.std
 
 
 class MyDataset(Dataset):
