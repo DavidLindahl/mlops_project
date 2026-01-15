@@ -1,3 +1,11 @@
+name: Code linting
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
   format:
     name: Lint / format / typecheck
@@ -19,8 +27,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          uv sync --locked --dev
+        run: uv sync --locked --dev
 
       - name: Ruff lint
         run: uv run ruff check .
