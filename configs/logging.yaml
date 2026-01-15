@@ -1,0 +1,11 @@
+logging:
+  level: INFO
+
+hydra:
+  run:
+    dir: reports/runs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: reports/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: false
