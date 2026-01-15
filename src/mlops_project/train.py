@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import csv
+import random
 from pathlib import Path
 
 import hydra
+import numpy as np
 import torch
+from hydra.core.hydra_config import HydraConfig
 from tqdm import tqdm
 from omegaconf import DictConfig
 from torch import nn
@@ -38,12 +42,18 @@ def _infer_device(requested: str | None) -> torch.device:
 
 
 def _seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
 def train_model(cfg: DictConfig) -> None:
     """Train a 2-class timm classifier on the dataset in `data/raw`."""
+    run_dir = Path(HydraConfig.get().runtime.output_dir)
+    checkpoint_dir = run_dir / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    metrics_path = run_dir / "metrics.csv"
     data_dir = Path(cfg.data.data_dir)
     device = _infer_device(cfg.train.device)
     _seed_everything(cfg.train.seed)
@@ -90,11 +100,10 @@ def train_model(cfg: DictConfig) -> None:
     scheduler = StepLR(optimizer, step_size=cfg.train.step_size, gamma=cfg.train.gamma)
     loss_fn = nn.CrossEntropyLoss()
 
-    checkpoint_dir = Path(cfg.train.checkpoint_dir)
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
     best_val_acc = -1.0
-    safe_name = cfg.model.model_name.replace("/", "_").replace(".", "_")
-    best_path = checkpoint_dir / f"{safe_name}_best.pt"
+    best_path = checkpoint_dir / "best_model.pt"
+    last_path = checkpoint_dir / "last_model.pt"
+    metrics_history: list[dict[str, float | int]] = []
 
     for epoch in range(cfg.train.num_epochs):
         model.train()
@@ -150,17 +159,44 @@ def train_model(cfg: DictConfig) -> None:
             f"val loss {val_loss:.4f} acc {val_acc:.4f}"
         )
 
+        metrics_history.append(
+            {
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                "train_acc": train_acc,
+                "val_loss": val_loss,
+                "val_acc": val_acc,
+            }
+        )
+
+        last_checkpoint = {
+            "model_name": cfg.model.model_name,
+            "num_classes": cfg.model.num_classes,
+            "state_dict": model.state_dict(),
+            "epoch": epoch + 1,
+            "val_acc": val_acc,
+        }
+        torch.save(last_checkpoint, last_path)
+
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            checkpoint = {
+            best_checkpoint = {
                 "model_name": cfg.model.model_name,
                 "num_classes": cfg.model.num_classes,
                 "state_dict": model.state_dict(),
                 "epoch": epoch + 1,
                 "val_acc": val_acc,
             }
-            torch.save(checkpoint, best_path)
+            torch.save(best_checkpoint, best_path)
             print(f"Saved best checkpoint to {best_path} (val acc {val_acc:.4f})")
+
+    with metrics_path.open("w", newline="") as metrics_file:
+        writer = csv.DictWriter(
+            metrics_file,
+            fieldnames=["epoch", "train_loss", "train_acc", "val_loss", "val_acc"],
+        )
+        writer.writeheader()
+        writer.writerows(metrics_history)
 
 
 @hydra.main(config_path=str(Path(__file__).parent.parent.parent / "configs"), config_name="config", version_base=None)

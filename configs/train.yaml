@@ -8,4 +8,3 @@ train:
   val_fraction: 0.2
   seed: 42
   device: null
-  checkpoint_dir: models
