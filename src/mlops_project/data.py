@@ -1,5 +1,6 @@
 import os
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
 
 import pandas as pd
@@ -15,9 +16,25 @@ KAGGLE_DATASET = "alessandrasala79/ai-vs-human-generated-dataset"
 class MyDataset(Dataset):
     """My custom dataset."""
 
-    def __init__(self, data_path: Path, limit: int | None = None) -> None:
-        self.data_path = data_path
-        self.annotations = pd.read_csv(os.path.join(data_path, "train.csv"), nrows=limit)
+    def __init__(
+        self,
+        data_path: str | Path,
+        limit: int | None = None,
+        transform: Callable[[Image.Image], object] | None = None,
+        target_transform: Callable[[object], object] | None = None,
+    ) -> None:
+        """Initialize dataset.
+
+        Args:
+            data_path: Path to the dataset root containing `train.csv` and image files.
+            limit: Optionally limit number of rows loaded from `train.csv` for quick experiments.
+            transform: Optional transform applied to the image (e.g., resize/normalize to tensors).
+            target_transform: Optional transform applied to the label.
+        """
+        self.data_path = Path(data_path)
+        self.annotations = pd.read_csv(self.data_path / "train.csv", nrows=limit)
+        self.transform = transform
+        self.target_transform = target_transform
 
     def __len__(self) -> int:
         """Return the length of the dataset."""
@@ -28,6 +45,10 @@ class MyDataset(Dataset):
         image_path = os.path.join(self.data_path, self.annotations.iloc[index]["file_name"])
         image = Image.open(image_path).convert("RGB")
         label = self.annotations.iloc[index]["label"]
+        if self.transform is not None:
+            image = self.transform(image)
+        if self.target_transform is not None:
+            label = self.target_transform(label)
         return image, label
 
     def preprocess(self, output_folder: Path) -> None:
