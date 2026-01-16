@@ -15,8 +15,9 @@ RUN uv sync --frozen --no-install-project
 COPY .dvc .dvc
 COPY .dvcignore .dvcignore
 
+ENV DVC_NO_SCM=true
 
-COPY .git .git
+
 COPY data data/
 COPY configs configs/
 COPY src src/
