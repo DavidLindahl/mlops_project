@@ -79,7 +79,11 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.coverage.run]
+source = ["mlops_project"]
 omit = ["tests/*"]
+
+[tool.coverage.report]
+ignore_errors = true
 
 [tool.mypy]
 python_version = "3.12"
