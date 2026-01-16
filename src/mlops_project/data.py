@@ -32,42 +32,13 @@ class ResizeNormalizeTransform:
         return self.normalizer(image)
 
 
-def preprocess_dataset(
-    *,
-    data_dir: str | Path,
-    output_dir: str | Path,
-    image_size: int = 224,
-    limit: int | None = None,
-) -> Path:
-    """Resize images ahead of training to avoid resizing at train time.
-
-    This function writes resized images to `output_dir` and copies `train.csv`
-    so the processed folder can be used as a dataset root.
-    """
-    data_path = Path(data_dir)
-    out_path = Path(output_dir)
-    out_path.mkdir(parents=True, exist_ok=True)
-
-    annotations = pd.read_csv(data_path / "train.csv", nrows=limit)
-    for _, row in annotations.iterrows():
-        img_name = row["file_name"]
-        src_path = data_path / img_name
-        dst_path = out_path / img_name
-        dst_path.parent.mkdir(parents=True, exist_ok=True)
-        image = Image.open(src_path).convert("RGB")
-        image = image.resize((image_size, image_size))
-        image.save(dst_path)
-
-    annotations.to_csv(out_path / "train.csv", index=False)
-    return out_path
-
-
 class MyDataset(Dataset):
     """My custom dataset for AI vs Human generated images."""
 
     def __init__(
         self,
         data_path: str | Path,
+        csv_path: str | Path,
         limit: int | None = None,
         transform: Callable[[Image.Image], object] | None = None,
         target_transform: Callable[[object], object] | None = None,
@@ -75,13 +46,14 @@ class MyDataset(Dataset):
         """Initialize dataset.
 
         Args:
-            data_path: Path to the dataset root containing `train.csv` and image files.
-            limit: Optionally limit number of rows loaded from `train.csv` for quick experiments.
+            data_path: Path to the directory containing image files.
+            csv_path: Path to the CSV file with annotations.
+            limit: Optionally limit number of rows loaded from CSV for quick experiments.
             transform: Optional transform applied to the image (e.g., resize/normalize to tensors).
             target_transform: Optional transform applied to the label.
         """
         self.data_path = Path(data_path)
-        self.annotations = pd.read_csv(self.data_path / "train.csv", nrows=limit)
+        self.annotations = pd.read_csv(csv_path, nrows=limit)
         self.transform = transform
         self.target_transform = target_transform
 
@@ -96,13 +68,15 @@ class MyDataset(Dataset):
             index: Index of the sample to return.
 
         Returns:
-            Tuple of (image, label) where image is a PIL Image.
+            Tuple of (image, label) where image is a PIL Image or tensor.
         """
-        img_name = self.annotations.iloc[index]["file_name"]
+        row = self.annotations.iloc[index]
+        # Handle both 'file_name' (train/val) and 'id' (test) columns
+        img_name = row.get("file_name", row.get("id"))
         image_path = self.data_path / img_name
 
         image = Image.open(image_path).convert("RGB")
-        label = self.annotations.iloc[index]["label"]
+        label = row.get("label", -1)  # Use -1 for test set without labels
         if self.transform is not None:
             image = self.transform(image)
         if self.target_transform is not None:

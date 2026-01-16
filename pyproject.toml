@@ -66,6 +66,7 @@ explicit = true
 train = "mlops_project.train:main"
 data = "mlops_project.data:main"
 eval = "mlops_project.evaluate:main"
+preprocess = "mlops_project.preprocess:main"
 
 [tool.ruff]
 line-length = 120

@@ -13,6 +13,12 @@ For training, the dataset can be preprocessed ahead of time using `preprocess_da
 This resizes images once and stores them under a processed folder, so training does not pay the resize cost.
 At train time, `NormalizeTransform` applies ImageNet-style normalization.
 
+To generate the processed dataset, run:
+
+```
+uv run preprocess
+```
+
 ### Model
 
 The model is defined in `mlops_project.model` as a thin wrapper around `timm.create_model`. The backbone
@@ -27,7 +33,8 @@ Key settings live in:
 - `configs/train.yaml` for optimizer/scheduler settings and training parameters
 - `configs/data.yaml` for data paths and loader settings
 
-Running `uv run train` uses the default configuration. Overrides can be passed on the command line, for example:
+Training uses the processed dataset only. Running `uv run train` uses the default configuration. Overrides can be
+passed on the command line, for example:
 
 ```
 uv run train train.batch_size=64 train.lr=1e-4 train.pretrained=false
@@ -41,12 +48,12 @@ Each run writes outputs to the Hydra run directory, including a `metrics.csv` fi
 Evaluation is implemented in `mlops_project.evaluate`. It loads the Hydra config from the run directory to
 recreate the preprocessing pipeline and model settings, then evaluates the best checkpoint.
 
-By default, `uv run eval` evaluates the latest run under `reports/runs`. You can also evaluate a run you
-copied into the `models/` folder:
+Evaluation only operates on runs copied into the `models/` folder:
 
 ```
-uv run eval
 uv run eval my_copied_run
 ```
+
+If no model name is provided, the latest folder under `models/` is used.
 
 Evaluation results are saved to `eval_metrics.csv` in the run directory.
