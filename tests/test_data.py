@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import pandas as pd
-from mlops_project.data import MyDataset
 from PIL import Image
 from torch.utils.data import Dataset
+
+from mlops_project.data import MyDataset
 
 
 def test_my_dataset(tmp_path: Path):
