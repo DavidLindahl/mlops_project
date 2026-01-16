@@ -50,7 +50,9 @@ def _load_run_config(run_dir: Path) -> DictConfig:
     config_path = run_dir / ".hydra" / "config.yaml"
     if not config_path.exists():
         raise FileNotFoundError(f"Missing Hydra config at {config_path}")
-    return OmegaConf.load(config_path)
+    cfg = OmegaConf.load(config_path)
+    assert isinstance(cfg, DictConfig)
+    return cfg
 
 
 def _checkpoint_path(run_dir: Path) -> Path:
