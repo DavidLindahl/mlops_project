@@ -1,4 +1,0 @@
-model:
-  model_name: tf_efficientnetv2_s.in21k_ft_in1k
-  num_classes: 2
-  pretrained: true

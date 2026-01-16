@@ -10,7 +10,7 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
-from mlops_project.data import MyDataset, TimmImageTransform
+from mlops_project.data import MyDataset, NormalizeTransform, ResizeNormalizeTransform
 from mlops_project.model import Model
 
 
@@ -75,27 +75,39 @@ def evaluate_run(run_dir: Path, device_override: str | None = None) -> Path:
     """
     cfg = _load_run_config(run_dir)
     project_root = _project_root()
-    data_dir = _resolve_data_dir(cfg, project_root)
+    raw_data_dir = _resolve_data_dir(cfg, project_root)
+    processed_data_dir = Path(cfg.data.processed_dir)
+    if not processed_data_dir.is_absolute():
+        processed_data_dir = (project_root / processed_data_dir).resolve()
+    use_processed = cfg.data.use_processed and processed_data_dir.exists()
+    data_dir = processed_data_dir if use_processed else raw_data_dir
     device = _infer_device(device_override or cfg.train.device)
 
-    model = Model(
-        model_name=cfg.model.model_name,
-        num_classes=cfg.model.num_classes,
-        pretrained=False,
-    ).to(device)
+    model = Model(pretrained=False).to(device)
     checkpoint = torch.load(_checkpoint_path(run_dir), map_location=device)
     model.load_state_dict(checkpoint["state_dict"])
 
     data_config = model.data_config
     input_size = data_config["input_size"]
-    transform = TimmImageTransform(
-        image_size=int(input_size[-1]),
-        mean=list(data_config["mean"]),
-        std=list(data_config["std"]),
-    )
+    if use_processed:
+        transform = NormalizeTransform(
+            mean=list(data_config["mean"]),
+            std=list(data_config["std"]),
+        )
+    else:
+        transform = ResizeNormalizeTransform(
+            image_size=int(input_size[-1]),
+            mean=list(data_config["mean"]),
+            std=list(data_config["std"]),
+        )
     target_transform = lambda y: int(y)  # noqa: E731
 
-    dataset = MyDataset(data_dir, transform=transform, target_transform=target_transform)
+    dataset = MyDataset(
+        data_dir,
+        limit=cfg.data.limit,
+        transform=transform,
+        target_transform=target_transform,
+    )
     val_size = max(1, int(len(dataset) * cfg.train.val_fraction))
     train_size = len(dataset) - val_size
     _, val_ds = random_split(

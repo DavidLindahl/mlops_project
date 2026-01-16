@@ -9,29 +9,28 @@ Data loading is handled by `MyDataset` in `mlops_project.data`. It reads annotat
 in `data/raw` and returns `(image, label)` pairs, where `image` is a PIL RGB image. The dataset supports
 optional `transform` and `target_transform` callables.
 
-For training, a minimal image transform is provided as `TimmImageTransform`. It resizes images to the
-input size expected by the chosen `timm` model and applies ImageNet-style normalization using the model's
-data configuration.
+For training, the dataset can be preprocessed ahead of time using `preprocess_dataset` in `mlops_project.data`.
+This resizes images once and stores them under a processed folder, so training does not pay the resize cost.
+At train time, `NormalizeTransform` applies ImageNet-style normalization.
 
 ### Model
 
-The model is defined in `mlops_project.model` as a thin wrapper around `timm.create_model`. The default
-backbone is `tf_efficientnetv2_s.in21k_ft_in1k`, configured for binary classification (`num_classes=2`).
-The wrapper exposes `data_config` so training can automatically set the correct input size and normalization.
+The model is defined in `mlops_project.model` as a thin wrapper around `timm.create_model`. The backbone
+is fixed to `tf_efficientnetv2_s.in21k_ft_in1k`, configured for binary classification (`num_classes=2`).
+The wrapper exposes `data_config` to provide ImageNet normalization statistics.
 
 ### Training
 
 Training is implemented in `mlops_project.train` and is driven by Hydra config files under `configs/`.
 Key settings live in:
 
-- `configs/model.yaml` for model name, class count, and pretrained weights
 - `configs/train.yaml` for optimizer/scheduler settings and training parameters
 - `configs/data.yaml` for data paths and loader settings
 
 Running `uv run train` uses the default configuration. Overrides can be passed on the command line, for example:
 
 ```
-uv run train train.batch_size=64 train.lr=1e-4 model.pretrained=false
+uv run train train.batch_size=64 train.lr=1e-4 train.pretrained=false
 ```
 
 Each run writes outputs to the Hydra run directory, including a `metrics.csv` file and checkpoints under

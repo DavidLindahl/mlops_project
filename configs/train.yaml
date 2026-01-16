@@ -1,5 +1,5 @@
 train:
-  batch_size: 32
+  batch_size: 4
   num_epochs: 10
   lr: 1e-3
   weight_decay: 1e-2
@@ -8,3 +8,4 @@ train:
   val_fraction: 0.2
   seed: 42
   device: null
+  pretrained: true

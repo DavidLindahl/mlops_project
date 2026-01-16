@@ -15,7 +15,7 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, random_split
 
-from mlops_project.data import MyDataset, TimmImageTransform
+from mlops_project.data import MyDataset, NormalizeTransform, ResizeNormalizeTransform
 from mlops_project.model import Model
 
 
@@ -38,25 +38,35 @@ def train_model(cfg: DictConfig) -> None:
     checkpoint_dir = run_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     metrics_path = run_dir / "metrics.csv"
-    data_dir = Path(cfg.data.data_dir)
+    raw_data_dir = Path(cfg.data.data_dir)
+    processed_data_dir = Path(cfg.data.processed_dir)
+    use_processed = cfg.data.use_processed and processed_data_dir.exists()
+    data_dir = processed_data_dir if use_processed else raw_data_dir
     device = _infer_device(cfg.train.device)
     _seed_everything(cfg.train.seed)
 
-    model = Model(
-        model_name=cfg.model.model_name,
-        num_classes=cfg.model.num_classes,
-        pretrained=cfg.model.pretrained,
-    ).to(device)
+    model = Model(pretrained=cfg.train.pretrained).to(device)
     data_config = model.data_config
     input_size = data_config["input_size"]
-    transform = TimmImageTransform(
-        image_size=int(input_size[-1]),
-        mean=list(data_config["mean"]),
-        std=list(data_config["std"]),
-    )
+    if use_processed:
+        transform = NormalizeTransform(
+            mean=list(data_config["mean"]),
+            std=list(data_config["std"]),
+        )
+    else:
+        transform = ResizeNormalizeTransform(
+            image_size=int(input_size[-1]),
+            mean=list(data_config["mean"]),
+            std=list(data_config["std"]),
+        )
     target_transform = lambda y: int(y)  # noqa: E731
 
-    dataset = MyDataset(data_dir, transform=transform, target_transform=target_transform)
+    dataset = MyDataset(
+        data_dir,
+        limit=cfg.data.limit,
+        transform=transform,
+        target_transform=target_transform,
+    )
     val_size = max(1, int(len(dataset) * cfg.train.val_fraction))
     train_size = len(dataset) - val_size
     train_ds, val_ds = random_split(
