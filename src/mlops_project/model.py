@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import timm
 import torch
-from timm.data import resolve_model_data_config
 from torch import nn
 
 
@@ -27,6 +25,13 @@ class Model(nn.Module):
             pretrained: Whether to load pretrained ImageNet weights. Defaults to
                 False to avoid implicit downloads in offline/CI environments.
         """
+        # local imports
+        # should stay in init as otherwise
+        # will be loaded during tests
+        # slowing everything down
+        import timm  # local import
+        from timm.data import resolve_model_data_config  # local import
+
         super().__init__()
         self.model_name = model_name
         self.num_classes = num_classes
