@@ -2,14 +2,17 @@ name: Code linting
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   format:
-    name: Check code formatting
-    runs-on: ubuntu-latest
+    name: Lint / format / typecheck
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -19,20 +22,16 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          uv sync --locked --dev
-          uv tree
+        run: uv sync --locked --dev
 
-      - name: ruff linter
-        run: |
-          uv run ruff check .
+      - name: Ruff lint
+        run: uv run ruff check .
 
-      - name: ruff formatter
-        run: |
-          uv run ruff format . --check
+      - name: Ruff format check
+        run: uv run ruff format . --check
 
-      - name: mypy type checking
-        run: |
-          uv run mypy .
+      - name: Mypy
+        run: uv run mypy .
