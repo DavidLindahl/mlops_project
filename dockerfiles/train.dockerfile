@@ -1,6 +1,7 @@
-FROM ghcr.io/astral-sh/uv:python3.12-alpine AS base
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-WORKDIR /app
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+#docker build -f dockerfiles/train.dockerfile . -t train:latest
+#docker run -v "$PWD/data:/data" train:testlimit data.data_dir=/data
+
 COPY uv.lock uv.lock
 COPY pyproject.toml pyproject.toml
 RUN uv sync --frozen --no-install-project
@@ -17,11 +18,10 @@ COPY configs configs/
 COPY src src/
 COPY README.md README.md
 COPY LICENSE LICENSE
+COPY configs configs/
+COPY .dvc .dvc
+COPY .dvcignore .dvcignore
 
 RUN uv sync --frozen
 
-ENTRYPOINT ["uv", "run", "src/mlops_project/train.py"]
-
-# Default command (can be overridden by Vertex AI)
-# This chains the pull AND the training
-CMD ["uv run dvc pull && uv run train"]
+ENTRYPOINT ["uv", "run", "train"]
