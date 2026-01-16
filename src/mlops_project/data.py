@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
@@ -18,9 +19,8 @@ class TimmImageTransform:
 
     def __call__(self, image: Image.Image) -> Tensor:
         image = image.resize((self.image_size, self.image_size))
-        byte_tensor = torch.ByteTensor(torch.ByteStorage.from_buffer(image.tobytes()))
-        x = byte_tensor.view(self.image_size, self.image_size, 3).permute(2, 0, 1).contiguous()
-        x = x.to(dtype=torch.float32).div_(255.0)
+        arr = np.array(image, dtype=np.uint8, copy=True)
+        x = torch.from_numpy(arr).permute(2, 0, 1).contiguous().to(dtype=torch.float32).div_(255.0)
         return (x - self.mean) / self.std
 
 
