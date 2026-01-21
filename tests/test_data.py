@@ -7,6 +7,8 @@ from PIL import Image
 from torch import Tensor
 from torch.utils.data import Dataset
 
+from mlops_project.data import MyDataset
+
 
 def _write_dummy_dataset(root: Path, n: int = 3) -> None:
     rows = []
