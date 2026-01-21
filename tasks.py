@@ -21,6 +21,15 @@ def train(ctx: Context) -> None:
 
 
 @task
+def serve_api(ctx: Context, host: str = "0.0.0.0", port: int = 8000, reload: bool = True) -> None:
+    """Serve the FastAPI app with Uvicorn."""
+    reload_flag = "--reload" if reload else ""
+    ctx.run(
+        f"PYTHONPATH=src uv run uvicorn mlops_project.api:app --host {host} --port {port} {reload_flag}".strip(),
+        echo=True,
+        pty=not WINDOWS,
+    )
+@task
 def test(ctx: Context) -> None:
     """Run tests."""
     ctx.run("uv run coverage run -m pytest tests/", echo=True, pty=not WINDOWS)
