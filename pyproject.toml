@@ -84,6 +84,8 @@ omit = ["tests/*"]
 
 [tool.coverage.report]
 ignore_errors = true
+fail_under = 75
+show_missing = true
 
 [tool.mypy]
 python_version = "3.12"

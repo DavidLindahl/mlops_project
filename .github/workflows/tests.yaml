@@ -5,6 +5,8 @@ on:
   pull_request:
 jobs:
   test:
+    env:
+      WANDB_MODE: disabled
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:

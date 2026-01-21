@@ -6,6 +6,8 @@ on:
 
 jobs:
   format:
+    env:
+      WANDB_MODE: disabled
     name: Lint / format / typecheck
     strategy:
       fail-fast: false
