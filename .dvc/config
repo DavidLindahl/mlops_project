@@ -1,4 +1,6 @@
 [core]
     remote = storage
+    no_scm = true
+
 ['remote "storage"']
     url = gs://dtu-mlops-first-bucket

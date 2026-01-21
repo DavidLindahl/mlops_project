@@ -1,0 +1,17 @@
+.git
+.dvc/cache
+__pycache__
+**/__pycache__
+.venv
+.uv
+.ipynb_checkpoints
+notebooks
+docs/site
+reports
+*.pt
+*.pth
+*.ckpt
+
+# If you ever pull data locally, don't bake it into images:
+data/train_data
+data/test_data_v2

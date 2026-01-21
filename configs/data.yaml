@@ -2,5 +2,5 @@ data:
   data_dir: data
   train_csv: train.csv
   test_csv: test.csv
-  limit: null
+  limit: 100
   num_workers: 0

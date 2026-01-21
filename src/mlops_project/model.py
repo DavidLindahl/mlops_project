@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import timm
-from timm.data import resolve_model_data_config
 import torch
+from timm.data import resolve_model_data_config
 from torch import nn
 
 

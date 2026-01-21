@@ -8,12 +8,12 @@ import hydra
 import numpy as np
 import torch
 from hydra.core.hydra_config import HydraConfig
-from tqdm import tqdm
 from omegaconf import DictConfig
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader, random_split
+from tqdm import tqdm
 
 from mlops_project.data import MyDataset, TimmImageTransform
 from mlops_project.model import Model
@@ -31,6 +31,7 @@ def _seed_everything(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
 
 def train_model(cfg: DictConfig) -> None:
     """Train a 2-class timm classifier on the dataset in `data/raw`."""
