@@ -1,0 +1,24 @@
+# Vertex AI Custom Job Configuration
+# Submit with: gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" --config=configs/vertex_train_config.yaml
+#
+# IMPORTANT: Replace mlops-training-stdne if using a different bucket name!
+
+workerPoolSpecs:
+  machineSpec:
+    machineType: n1-standard-8
+    acceleratorType: NVIDIA_TESLA_T4
+    acceleratorCount: 1
+  replicaCount: 1
+  containerSpec:
+    imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-trainer:v1
+    args:
+      # Hydra overrides for GCS paths (use YOUR bucket with processed data)
+      - "data.train_dir=/gcs/mlops-training-stdne/processed/train"
+      - "data.val_dir=/gcs/mlops-training-stdne/processed/val"
+      - "data.train_csv=/gcs/mlops-training-stdne/processed/train.csv"
+      - "data.val_csv=/gcs/mlops-training-stdne/processed/val.csv"
+      # Training parameters
+      - "train.num_epochs=10"
+      - "train.batch_size=32"
+      # Output directory - saves checkpoints and metrics to YOUR bucket
+      - "hydra.run.dir=/gcs/mlops-training-stdne/runs/${now:%Y-%m-%d}/${now:%H-%M-%S}"

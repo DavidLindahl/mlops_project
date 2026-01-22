@@ -3,4 +3,4 @@ outs:
   size: 7069217632
   nfiles: 5540
   hash: md5
-  path: test_data_v2
+  path: raw/test_data

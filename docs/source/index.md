@@ -3,6 +3,11 @@
 This project provides a simple image classification pipeline for the AI vs Human Generated Images dataset.
 The core components are data loading, a `timm` model wrapper, and a Hydra-based training entrypoint.
 
+### Quick Start
+
+- **Local Development**: See sections below for local training and evaluation
+- **GCP Vertex AI**: See [GCP Vertex AI Setup Guide](../GCP_VERTEX_AI_SETUP.md) for cloud-based training on Google Cloud Platform
+
 ### Data loading
 
 Data loading is handled by `MyDataset` in `mlops_project.data`. It reads annotations from `train.csv`
@@ -57,3 +62,28 @@ uv run eval my_copied_run
 If no model name is provided, the latest folder under `models/` is used.
 
 Evaluation results are saved to `eval_metrics.csv` in the run directory.
+
+### GCP Vertex AI Training
+
+This project supports training on Google Cloud Platform using Vertex AI Custom Jobs. This provides:
+
+- **Scalable GPU resources** - T4, V100, or A100 GPUs on demand
+- **Reproducible environments** - Docker containers ensure consistency
+- **Cost-effective** - Pay only for compute time used
+- **Cloud-native data** - Direct access to GCS buckets via `/gcs/` mount
+
+**Quick workflow:**
+
+1. Build and push Docker images to Artifact Registry
+2. Upload data to GCS bucket
+3. Submit preprocessing job (optional, can run locally)
+4. Submit training job with GPU
+5. Monitor and download results
+
+See the complete [GCP Vertex AI Setup Guide](../GCP_VERTEX_AI_SETUP.md) for detailed instructions.
+
+**Key files:**
+- `dockerfiles/vertex_train.dockerfile` - Training container with CUDA support
+- `dockerfiles/vertex_preprocess.dockerfile` - Lightweight preprocessing container
+- `configs/vertex_train_config.yaml` - Vertex AI training job configuration
+- `configs/vertex_preprocess_config.yaml` - Vertex AI preprocessing job configuration
