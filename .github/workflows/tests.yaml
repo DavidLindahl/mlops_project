@@ -11,6 +11,10 @@ jobs:
         operating-system: ["ubuntu-latest", "windows-latest", "macos-latest"]
         python-version: ["3.12"]
 
+    env:
+      WANDB_MODE: disabled
+      WANDB_SILENT: "true"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
