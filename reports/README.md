@@ -123,7 +123,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 1 fill here ---
+--- 79 ---
 
 ### Question 2
 > **Enter the study number for each member in the group**
@@ -148,7 +148,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 3 fill here ---
+--- We used the timm library to load the model in our project. Other than that we used simple ML packages like pandas and torch for dataloading.---
 
 ## Coding environment
 
@@ -168,7 +168,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 4 fill here ---
+--- We used uv for managing out dependencies. UV is the new SOTA that you introduced to us. To run files in the project, one simply has the run uv sync first to get the dependecies. To run files (eg. train), we updated the tasks.py file, so that you simply run in the terminal uv run train. ---
 
 ### Question 5
 
@@ -183,8 +183,8 @@ will check the repositories and the code to verify your answers.
 > *experiments.*
 >
 > Answer:
+ *From the cookiecutter template we have filled out the src, configs, dockerfiles, data, docs, tests, and notebooks folder. We added a .dvc folder, that contains the dvc cache (if data is cached), and config for dvc. It was automatically generated, when we set up dvc.
 
---- question 5 fill here ---
 
 ### Question 6
 
@@ -199,7 +199,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 6 fill here ---
+We used the program ruff for linting 
 
 ## Version control
 
@@ -218,7 +218,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 7 fill here ---
 
 ### Question 8
 
@@ -248,7 +247,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 9 fill here ---
+From the start of the project, we alawys worked in branches, and merged into main when we were done with a feature. We setup dependabot to automatically update the dependencies in the project, using pull requests. Using different brannches ensured, that we could work on seperate features at the same time, and not interfere with each other.
 
 ### Question 10
 
@@ -263,7 +262,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 10 fill here ---
+We started off using dvc. This was a good choice in the start, since we did not have to locally store 11gb of image files, and could simply run 'dvc pull' to get the data. However, later in the process, when we wanted to train the model using GCP, we realized that GCP has buckets, that are better when training using vertex AI.
 
 ### Question 11
 
@@ -299,7 +298,9 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 12 fill here ---
+We ended up using hydra and having multiple config files for the project. Using hydra allowed us to change hyperparameters 2 ways:
+1. Either using CLI arguments, which is helpful when running a VM.
+2. Changing arguments in the config files, which were nice when running things locally.
 
 ### Question 13
 
