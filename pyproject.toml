@@ -54,6 +54,8 @@ dev = [
     "pillow>=12.1.0",
 ]
 
+[tool.uv]
+packages = [{ include = "mlops_project", from = "src" }]
 
 [tool.uv.sources]
 torch = [

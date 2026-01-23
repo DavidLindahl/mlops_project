@@ -5,7 +5,7 @@ steps:
     'build',
     '.',
     '-t',
-    'europe-west1-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME',
+    'europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$_IMAGE_TAG',
     '-f',
     'dockerfiles/vertex_train.dockerfile'
   ]
@@ -13,7 +13,11 @@ steps:
   id: 'Push container image'
   args: [
     'push',
-    'europe-west1-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME'
+    'europe-west1-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$_IMAGE_TAG'
   ]
+substitutions:
+  _REPO_NAME: mlops-training
+  _IMAGE_NAME: mlops-trainer
+  _IMAGE_TAG: v1
 options:
   logging: CLOUD_LOGGING_ONLY
