@@ -1,6 +1,7 @@
 defaults:
   - data
-  - model
   - train
+  - model
   - logging
+  - eval
   - _self_
