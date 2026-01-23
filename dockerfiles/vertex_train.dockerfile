@@ -41,13 +41,14 @@ RUN uv pip install --system --no-cache \
     tqdm>=4.66.5 \
     timm>=1.0.24 \
     numpy>=1.25.2 \
-    omegaconf
+    omegaconf \
+    wandb>=0.24.0 \
+    python-dotenv>=1.2.1
 
 # Copy source code and configs
 COPY configs configs/
 COPY src src/
 COPY README.md README.md
-COPY LICENSE LICENSE
 
 # Install the project as editable package
 RUN uv pip install --system --no-deps -e .
