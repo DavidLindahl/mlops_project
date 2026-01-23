@@ -57,15 +57,15 @@ dev = [
 
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cpu" },
+    { index = "pytorch-cuda" },
 ]
 torchvision = [
-    { index = "pytorch-cpu" },
+    { index = "pytorch-cuda" },
 ]
 
 [[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu121"
 explicit = true
 
 [project.scripts]

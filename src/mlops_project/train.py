@@ -22,7 +22,14 @@ import wandb
 from mlops_project.data import MyDataset, NormalizeTransform
 from mlops_project.model import Model
 
+
+
 load_dotenv()
+
+
+def _to_int(y: Any) -> int:
+    """Convert label to int. Defined at module level for Windows multiprocessing compatibility."""
+    return int(y)
 
 
 def _infer_device(requested: str | None) -> torch.device:
@@ -80,6 +87,12 @@ def train_model(cfg: DictConfig) -> None:
             "Processed train/val directories not found. Run preprocessing before training."
         )
     device = _infer_device(cfg.train.device)
+    print(f"Using device: {device}")
+    if device.type == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA available: {torch.cuda.is_available()}")
+    else:
+        print("WARNING: Training on CPU")
     _seed_everything(cfg.train.seed)
 
     # W&B init (disabled in CI via WANDB_MODE=disabled)
@@ -104,7 +117,7 @@ def train_model(cfg: DictConfig) -> None:
         mean=list(data_config["mean"]),
         std=list(data_config["std"]),
     )
-    target_transform = lambda y: int(y)  # noqa: E731
+    target_transform = _to_int
 
     train_ds = MyDataset(
         train_dir,

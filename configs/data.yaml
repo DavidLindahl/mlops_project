@@ -10,5 +10,5 @@ data:
   train_limit: 50000
   val_limit: 7000
   test_limit: 7000
-  num_workers: 0
+  num_workers: 4
   image_size: 224
