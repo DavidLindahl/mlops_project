@@ -80,7 +80,9 @@ This project supports training on Google Cloud Platform using Vertex AI Custom J
 4. Submit training job with GPU
 5. Monitor and download results
 
-See the complete [GCP Vertex AI Setup Guide](../GCP_VERTEX_AI_SETUP.md) for detailed instructions.
+**Documentation:**
+- **[GCP Workflow Guide](../GCP_WORKFLOW.md)** - Quick reference for daily operations
+- **[GCP Vertex AI Setup](../GCP_VERTEX_AI_SETUP.md)** - Complete setup instructions
 
 **Key files:**
 - `dockerfiles/vertex_train.dockerfile` - Training container with CUDA support

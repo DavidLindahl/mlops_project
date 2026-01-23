@@ -237,6 +237,42 @@ gsutil cat gs://mlops-training-stdne/processed/train.csv | head -5
 
 ## Phase 3: Build the Vertex AI Container
 
+### 3.0 Quick Start with Makefile
+
+For convenience, a Makefile provides simple commands for common workflows:
+
+```bash
+# See all available commands
+make help
+
+# Build and push training image
+make push-train TAG=v1
+
+# Build and push preprocessing image
+make push-preprocess TAG=v1
+
+# Submit training job
+make submit-train
+
+# Submit preprocessing job
+make submit-preprocess
+
+# Promote a model to production
+make promote-model RUN=2026-01-23/10-47-37 VERSION=v1
+
+# List available runs
+make list-runs
+```
+
+All commands support environment variables (set in Makefile or override):
+- `PROJECT_ID` (default: `mlops-485010`)
+- `REGION` (default: `europe-west1`)
+- `REPO_NAME` (default: `mlops-training`)
+- `BUCKET` (default: `gs://mlops-training-stdne`)
+- `TAG` (default: `v1`)
+
+**Note**: The manual steps below still work if you prefer more control.
+
 ### 3.1 Create the Vertex AI Dockerfile
 
 Edit `dockerfiles/vertex_train.dockerfile`:
@@ -283,6 +319,18 @@ ENTRYPOINT ["uv", "run", "train"]
 
 ### 3.2 Build and Push the Image
 
+**Option A: Using Makefile (Recommended)**
+
+```bash
+# Build and push training image
+make push-train TAG=v1
+
+# Build only (without pushing)
+make build-train TAG=v1
+```
+
+**Option B: Manual Docker Commands**
+
 ```bash
 # Set your project ID
 export PROJECT_ID=mlops-485010
@@ -305,6 +353,15 @@ docker push ${IMAGE_URI}
 ### 3.3 Build and Push the Preprocessing Image (Optional but Recommended)
 
 For faster preprocessing builds and smaller image size:
+
+**Option A: Using Makefile (Recommended)**
+
+```bash
+# Build and push preprocessing image
+make push-preprocess TAG=v1
+```
+
+**Option B: Manual Docker Commands**
 
 ```bash
 # Use same variables, different image name
@@ -450,7 +507,14 @@ machineSpec:
 
 ### 5.1 Submit a Preprocessing Job
 
-Run preprocessing on Vertex AI:
+**Option A: Using Makefile (Recommended)**
+
+```bash
+# Submit preprocessing job (auto-generates name with timestamp)
+make submit-preprocess
+```
+
+**Option B: Manual gcloud Command**
 
 ```bash
 gcloud ai custom-jobs create \
@@ -470,6 +534,15 @@ gsutil ls gs://mlops-training-stdne/processed/
 ```
 
 ### 5.2 Submit a Training Job
+
+**Option A: Using Makefile (Recommended)**
+
+```bash
+# Submit training job (auto-generates name with timestamp)
+make submit-train
+```
+
+**Option B: Manual gcloud Command**
 
 ```bash
 # Config file already has correct project ID (mlops-485010), then:
@@ -623,7 +696,64 @@ with torch.no_grad():
 print(f"Predicted class: {pred_class}, Confidence: {confidence:.2%}")
 ```
 
-### 6.4 Best Practices
+### 6.4 Promote Model to Production
+
+After training, promote your best model to a dedicated `models/` folder for API inference:
+
+**Using Makefile (Recommended):**
+
+```bash
+# List available runs
+make list-runs
+
+# Promote a specific run to versioned folder (auto-sets as latest)
+make promote-model RUN=2026-01-23/10-47-37 VERSION=v1
+
+# If VERSION not specified, uses date from RUN path
+make promote-model RUN=2026-01-23/10-47-37
+```
+
+**Manual Method:**
+
+```bash
+# Copy best model to versioned folder
+gsutil cp \
+  gs://mlops-training-stdne/runs/2026-01-23/10-47-37/checkpoints/best_model.pt \
+  gs://mlops-training-stdne/models/v1/model.pt
+
+# Set as latest for API
+gsutil cp \
+  gs://mlops-training-stdne/models/v1/model.pt \
+  gs://mlops-training-stdne/models/latest/model.pt
+```
+
+**Recommended Folder Structure:**
+
+```
+gs://mlops-training-stdne/
+├── runs/                    # Training runs (timestamped)
+│   └── 2026-01-23/
+│       └── 10-47-37/
+│           └── checkpoints/
+│               ├── best_model.pt
+│               └── last_model.pt
+└── models/                  # Production models
+    ├── latest/              # Currently deployed (for API)
+    │   └── model.pt
+    └── v1/                  # Versioned models
+        └── model.pt
+```
+
+**Use in API:**
+
+```python
+# In your API code, load from GCS
+MODEL_PATH = "/gcs/mlops-training-stdne/models/latest/model.pt"
+# Or versioned:
+MODEL_PATH = "/gcs/mlops-training-stdne/models/v1/model.pt"
+```
+
+### 6.5 Best Practices
 
 - ✅ **Run evaluation on Vertex AI** - Same environment as training, reproducible
 - ✅ **Store all artifacts in GCS** - Checkpoints, metrics, predictions
