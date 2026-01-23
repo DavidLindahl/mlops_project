@@ -15,14 +15,13 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 import wandb
 from mlops_project.data import MyDataset, NormalizeTransform
 from mlops_project.model import Model
-
-
+from wandb.sdk.wandb_run import Run
 
 load_dotenv()
 
@@ -74,6 +73,43 @@ def _maybe_stop_profiler(prof: torch.profiler.profile | None) -> None:
         prof.__exit__(None, None, None)
 
 
+def _log_profiler_summary_to_wandb(run: Run, prof: torch.profiler.profile, *, top_k: int = 30) -> None:
+    """Log 'what took the most time' from torch.profiler directly into W&B."""
+    # Prefer CUDA timing if available; otherwise CPU timing.
+    sort_by = "self_cuda_time_total" if torch.cuda.is_available() else "self_cpu_time_total"
+
+    # Human-readable table (shows up nicely as a panel in W&B)
+    table_str = prof.key_averages().table(sort_by=sort_by, row_limit=top_k)
+    run.log({"profiler/top_ops": wandb.Html(f"<pre>{table_str}</pre>")})
+
+    # Structured table (lets you sort/filter in W&B UI)
+    rows: list[list[Any]] = []
+    for evt in prof.key_averages():
+        rows.append(
+            [
+                evt.key,
+                int(getattr(evt, "count", 0)),
+                float(getattr(evt, "self_cpu_time_total", 0.0)),
+                float(getattr(evt, "cpu_time_total", 0.0)),
+                float(getattr(evt, "self_cuda_time_total", 0.0)),
+                float(getattr(evt, "cuda_time_total", 0.0)),
+            ]
+        )
+
+    wb_table = wandb.Table(
+        columns=[
+            "op",
+            "count",
+            "self_cpu_time_total_us",
+            "cpu_time_total_us",
+            "self_cuda_time_total_us",
+            "cuda_time_total_us",
+        ],
+        data=rows,
+    )
+    run.log({"profiler/ops_table": wb_table})
+
+
 def train_model(cfg: DictConfig) -> None:
     """Train a 2-class timm classifier on the dataset in `data/raw`."""
     run_dir = Path(HydraConfig.get().runtime.output_dir)
@@ -83,9 +119,7 @@ def train_model(cfg: DictConfig) -> None:
     train_dir = Path(cfg.data.train_dir)
     val_dir = Path(cfg.data.val_dir)
     if not train_dir.exists() or not val_dir.exists():
-        raise FileNotFoundError(
-            "Processed train/val directories not found. Run preprocessing before training."
-        )
+        raise FileNotFoundError("Processed train/val directories not found. Run preprocessing before training.")
     device = _infer_device(cfg.train.device)
     print(f"Using device: {device}")
     if device.type == "cuda":
@@ -112,7 +146,7 @@ def train_model(cfg: DictConfig) -> None:
 
     model = Model(pretrained=cfg.train.pretrained).to(device)
     data_config = model.data_config
-    input_size = data_config["input_size"]
+    # input_size = data_config["input_size"]
     transform = NormalizeTransform(
         mean=list(data_config["mean"]),
         std=list(data_config["std"]),
@@ -283,7 +317,11 @@ def train_model(cfg: DictConfig) -> None:
         _maybe_stop_profiler(prof)
 
         if run is not None:
-            # Upload profiler traces if enabled
+            # Log "what took most time" into the W&B run page
+            if prof is not None:
+                _log_profiler_summary_to_wandb(run, prof)
+
+            # Upload profiler traces if enabled (TensorBoard trace files)
             if prof_dir is not None and prof_dir.exists():
                 artifact = wandb.Artifact("torch_profiler", type="profile")
                 artifact.add_dir(str(prof_dir))

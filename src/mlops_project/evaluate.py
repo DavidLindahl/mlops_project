@@ -7,7 +7,7 @@ import hydra
 import torch
 from omegaconf import DictConfig
 from torch import nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from mlops_project.data import MyDataset, NormalizeTransform
