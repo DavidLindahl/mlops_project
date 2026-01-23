@@ -39,6 +39,7 @@ dependencies = [
     "dvc-gs>=3.0.2",
     "wandb>=0.24.0",
     "python-dotenv>=1.2.1",
+    "requests>=2.31.0",
 ]
 
 [dependency-groups]
@@ -57,10 +58,10 @@ dev = [
 
 [tool.uv.sources]
 torch = [
-    { index = "pytorch-cuda" },
+    { index = "pytorch-cuda", marker = "sys_platform != 'darwin'" },
 ]
 torchvision = [
-    { index = "pytorch-cuda" },
+    { index = "pytorch-cuda", marker = "sys_platform != 'darwin'" },
 ]
 
 [[tool.uv.index]]
@@ -73,6 +74,7 @@ train = "mlops_project.train:main"
 data = "mlops_project.data:main"
 eval = "mlops_project.evaluate:main"
 preprocess = "mlops_project.preprocess:main"
+inference = "mlops_project.inference:app"
 
 [tool.ruff]
 line-length = 120

@@ -22,4 +22,5 @@ plugins:
 nav:
   - Home: index.md
   - GCP Workflow Guide: ../GCP_WORKFLOW.md
+  - API Deployment: ../API_DEPLOYMENT.md
   - GCP Vertex AI Setup: ../GCP_VERTEX_AI_SETUP.md
