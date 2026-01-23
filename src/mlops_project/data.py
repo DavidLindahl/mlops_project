@@ -68,13 +68,16 @@ class MyDataset(Dataset):
         img_name = row.get("file_name", row.get("id"))
         image_path = self.data_path / img_name
 
-        image: Tensor | Image.Image = Image.open(image_path).convert("RGB")
+        image = Image.open(image_path).convert("RGB")
         label = int(row.get("label", -1))
 
         if self.transform is not None:
-            image = self.transform(image)
+            transformed = self.transform(image)
+            image_or_tensor: Tensor | Image.Image = transformed
+        else:
+            image_or_tensor = image
 
         if self.target_transform is not None:
             label = self.target_transform(label)
 
-        return image, label
+        return image_or_tensor, label

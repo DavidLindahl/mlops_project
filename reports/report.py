@@ -15,7 +15,7 @@ from loguru import logger
 class Constraints(pydantic.BaseModel):
     """Base class for constraints."""
 
-    def __call__(self, answer: str, index: int) -> None:
+    def __call__(self, answer: str, index: int) -> bool:
         """Check constraints on the answer."""
         raise NotImplementedError
 
@@ -36,11 +36,11 @@ class LengthConstraints(Constraints):
 
     def __call__(self, answer: str, index: int) -> bool:
         """Check constraints on the length of the answer."""
-        answer = answer.split()
-        if not (self.min_length <= len(answer) <= self.max_length):
+        words = answer.split()
+        if not (self.min_length <= len(words) <= self.max_length):
             logger.warning(
                 f"Question {index} failed check. Expected number of words to be"
-                f" between {self.min_length} and {self.max_length} but got {len(answer)}"
+                f" between {self.min_length} and {self.max_length} but got {len(words)}"
             )
             return False
         return True
@@ -69,7 +69,7 @@ class MultiConstraints(Constraints):
 
     constrains: list[Constraints]
 
-    def __call__(self, answer: str, index: int) -> None:
+    def __call__(self, answer: str, index: int) -> bool:
         """Check multiple constraints on the answer."""
         value = True
         for fn in self.constrains:

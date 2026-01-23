@@ -51,10 +51,10 @@ def predict(
         typer.echo(f"Processing {i}/{len(image_files)}: {image_path.name}...", nl=False)
 
         try:
-            with open(image_path, "rb") as f:
+            with open(image_path, "rb") as image_file:
                 response = requests.post(
                     f"{api_url}/predict",
-                    files={"file": (image_path.name, f, "image/jpeg")},
+                    files={"file": (image_path.name, image_file, "image/jpeg")},
                     timeout=30,
                 )
                 response.raise_for_status()
@@ -84,8 +84,8 @@ def predict(
             )
 
     typer.echo(f"\n💾 Saving results to {output}")
-    with open(output, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["image", "prediction", "label", "confidence", "model_version"])
+    with open(output, "w", newline="") as output_file:
+        writer = csv.DictWriter(output_file, fieldnames=["image", "prediction", "label", "confidence", "model_version"])
         writer.writeheader()
         writer.writerows(results)
 

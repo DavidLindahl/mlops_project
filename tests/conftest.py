@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 import types
+from typing import Any
 
 import torch
 from torch import nn
@@ -22,7 +23,7 @@ def pytest_configure() -> None:
     Ensure imports are CI-safe by providing a minimal fake `timm` module.
     This prevents `timm -> torchvision` import issues in Ubuntu runners.
     """
-    fake_timm = types.ModuleType("timm")
+    fake_timm: Any = types.ModuleType("timm")
 
     def create_model(model_name: str, pretrained: bool, num_classes: int) -> nn.Module:
         _ = (model_name, pretrained)
@@ -30,7 +31,7 @@ def pytest_configure() -> None:
 
     fake_timm.create_model = create_model
 
-    fake_timm_data = types.ModuleType("timm.data")
+    fake_timm_data: Any = types.ModuleType("timm.data")
 
     def resolve_model_data_config(_model: nn.Module) -> dict:
         return {"input_size": (3, 8, 8), "mean": [0.0, 0.0, 0.0], "std": [1.0, 1.0, 1.0]}
