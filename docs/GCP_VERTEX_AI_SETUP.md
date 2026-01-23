@@ -343,14 +343,10 @@ Create `configs/vertex_train_config.yaml`:
 
 ```yaml
 # Vertex AI Custom Job Configuration
-# Submit with:
-#   export WANDB_API_KEY="your_api_key_here"
-#   gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" \
-#     --config=configs/vertex_train_config.yaml \
-#     --set-env-vars="WANDB_API_KEY=${WANDB_API_KEY}"
+# Submit with: gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" --config=configs/vertex_train_config.yaml
 #
 # IMPORTANT: Replace mlops-training-stdne if using a different bucket name!
-# IMPORTANT: Set WANDB_API_KEY environment variable before submitting (see Phase 5.2)
+# IMPORTANT: Add your WANDB_API_KEY (get from: https://wandb.ai/authorize)
 
 workerPoolSpecs:
   machineSpec:
@@ -361,14 +357,11 @@ workerPoolSpecs:
   containerSpec:
     imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-trainer:v1
     env:
-      # W&B configuration - WANDB_API_KEY is set via --set-env-vars flag
-      # Set via: export WANDB_API_KEY="your_key" before submitting
+      # W&B API key for experiment tracking (REPLACE WITH YOUR KEY)
+      - name: WANDB_API_KEY
+        value: "YOUR_WANDB_API_KEY_HERE"
       - name: WANDB_PROJECT
-        value: "mlops_project"
-      - name: WANDB_ENTITY
-        value: "your_entity_name"
-      - name: WANDB_MODE
-        value: "online"
+        value: "mlops-vertex-training"
       # Uncomment to disable W&B if you don't want to use it:
       # - name: WANDB_MODE
       #   value: "disabled"
@@ -387,9 +380,8 @@ workerPoolSpecs:
 
 **W&B Setup:**
 1. Get your API key from: https://wandb.ai/authorize
-2. Set it as an environment variable: `export WANDB_API_KEY="your_key"`
-3. Pass it to the job via `--set-env-vars` flag (see Phase 5.2)
-4. Or disable W&B by setting `WANDB_MODE=disabled` in the env section
+2. Replace `YOUR_WANDB_API_KEY_HERE` with your actual key
+3. Or disable W&B by uncommenting the `WANDB_MODE: disabled` env var
 
 ### 4.2 Create Preprocessing Config
 
@@ -479,25 +471,12 @@ gsutil ls gs://mlops-training-stdne/processed/
 
 ### 5.2 Submit a Training Job
 
-**Set W&B API Key (Required for W&B logging):**
-
-```bash
-# Get your API key from: https://wandb.ai/authorize
-export WANDB_API_KEY="your_wandb_api_key_here"
-```
-
-**Submit training job:**
-
 ```bash
 # Config file already has correct project ID (mlops-485010), then:
 gcloud ai custom-jobs create \
     --region=europe-west1 \
     --display-name="mlops_experiment_001" \
-    --config=configs/vertex_train_config.yaml \
-    --set-env-vars="WANDB_API_KEY=${WANDB_API_KEY}"
-```
-
-**Note:** The `WANDB_API_KEY` is passed securely via the `--set-env-vars` flag, keeping it out of version control. If you don't want to use W&B, you can disable it by adding `WANDB_MODE=disabled` to the env vars in the config file.
+    --config=configs/vertex_train_config.yaml
 ```
 
 ### 5.3 Submit with Inline Overrides

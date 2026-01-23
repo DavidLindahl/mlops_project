@@ -1,12 +1,7 @@
 # Vertex AI Custom Job Configuration
-# Submit with:
-#   export WANDB_API_KEY="your_api_key_here"
-#   gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" \
-#     --config=configs/vertex_train_config.yaml \
-#     --set-env-vars="WANDB_API_KEY=${WANDB_API_KEY}"
+# Submit with: gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" --config=configs/vertex_train_config.yaml
 #
 # IMPORTANT: Replace mlops-training-stdne if using a different bucket name!
-# IMPORTANT: Set WANDB_API_KEY environment variable before submitting (see docs)
 
 workerPoolSpecs:
   machineSpec:
@@ -17,8 +12,9 @@ workerPoolSpecs:
   containerSpec:
     imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-trainer:v1
     env:
-      # W&B configuration - WANDB_API_KEY is set via --set-env-vars flag
-      # Set these via: export WANDB_API_KEY="your_key" before submitting
+      # W&B configuration for experiment tracking
+      - name: WANDB_API_KEY
+        value: "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"
       - name: WANDB_PROJECT
         value: "mlops_project"
       - name: WANDB_ENTITY
