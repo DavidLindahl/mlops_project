@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+from typing import Any, cast
 
 import mlops_project.api as api_mod
 import pytest
@@ -65,8 +66,8 @@ def test_predict_returns_503_if_model_not_loaded() -> None:
 
 
 def test_predict_rejects_invalid_content_type() -> None:
-    api_mod.model = _DummyModel()
-    api_mod.transform = _DummyTransform()
+    api_mod.model = cast(Any, _DummyModel())
+    api_mod.transform = cast(Any, _DummyTransform())
 
     client = TestClient(api_mod.app)
     r = client.post("/predict", files={"file": ("x.txt", b"not-an-image", "text/plain")})
@@ -74,8 +75,8 @@ def test_predict_rejects_invalid_content_type() -> None:
 
 
 def test_predict_success() -> None:
-    api_mod.model = _DummyModel()
-    api_mod.transform = _DummyTransform()
+    api_mod.model = cast(Any, _DummyModel())
+    api_mod.transform = cast(Any, _DummyTransform())
 
     client = TestClient(api_mod.app)
 
