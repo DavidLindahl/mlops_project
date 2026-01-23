@@ -5,7 +5,7 @@ The core components are data loading, a `timm` model wrapper, and a Hydra-based 
 
 ### Quick Start
 
-- **Local Development**: See sections below for local training and evaluation
+- **Local Development**: See sections below for local training and inference
 - **GCP Vertex AI**: See [GCP Vertex AI Setup Guide](../GCP_VERTEX_AI_SETUP.md) for cloud-based training on Google Cloud Platform
 
 ### Data loading
@@ -47,21 +47,6 @@ uv run train train.batch_size=64 train.lr=1e-4 train.pretrained=false
 
 Each run writes outputs to the Hydra run directory, including a `metrics.csv` file and checkpoints under
 `checkpoints/` (best and last).
-
-### Evaluation
-
-Evaluation is implemented in `mlops_project.evaluate`. It loads the Hydra config from the run directory to
-recreate the preprocessing pipeline and model settings, then evaluates the best checkpoint.
-
-Evaluation only operates on runs copied into the `models/` folder:
-
-```
-uv run eval my_copied_run
-```
-
-If no model name is provided, the latest folder under `models/` is used.
-
-Evaluation results are saved to `eval_metrics.csv` in the run directory.
 
 ### GCP Vertex AI Training
 
