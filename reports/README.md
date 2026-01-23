@@ -123,7 +123,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- 79 ---
+79
 
 ### Question 2
 > **Enter the study number for each member in the group**
@@ -134,7 +134,7 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- question 2 fill here ---
+s234818, s234817, s224177
 
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
@@ -148,7 +148,8 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- We used the timm library to load the model in our project. Other than that we used simple ML packages like pandas and torch for dataloading.---
+We used the timm library to load the model in our project. Other than that we used simple ML packages like pandas
+and torch for dataloading, nothing out of the ordinary.
 
 ## Coding environment
 
@@ -168,7 +169,9 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
---- We used uv for managing out dependencies. UV is the new SOTA that you introduced to us. To run files in the project, one simply has the run uv sync first to get the dependecies. To run files (eg. train), we updated the tasks.py file, so that you simply run in the terminal uv run train. ---
+We used uv for managing out dependencies. UV is the new SOTA that you introduced to us. To run files in the
+project, one simply has the run uv sync first to get the dependecies. To run files (eg. train), we updated the
+`tasks.py` file, so that you simply run in the terminal uv run train.
 
 ### Question 5
 
@@ -183,8 +186,10 @@ will check the repositories and the code to verify your answers.
 > *experiments.*
 >
 > Answer:
- *From the cookiecutter template we have filled out the src, configs, dockerfiles, data, docs, tests, and notebooks folder. We added a .dvc folder, that contains the dvc cache (if data is cached), and config for dvc. It was automatically generated, when we set up dvc.
 
+From the cookiecutter template we have filled out the src, configs, dockerfiles, data, docs, tests, and notebooks
+folder. We added a .dvc folder, that contains the dvc cache (if data is cached), and config for dvc. It was
+automatically generated, when we set up dvc.
 
 ### Question 6
 
@@ -199,7 +204,13 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 
-We used the program ruff for linting 
+We implemented code quality rules using pre-commit hooks and enforced style and correctness with ruff. Ruff was
+configured to run both linting (ruff check) and formatting (ruff format) so the codebase stays consistent and common
+issues are caught early. We also added mypy for static type checking, and fixed several typing issues so that type
+errors are detected before runtime. Documentation was handled through docstrings in key functions/classes and by
+keeping configuration and scripts understandable for other team members. These practices matter more as projects grow
+because they reduce friction in collaboration, but we found that in a project of this size it was probably a little
+overkill.
 
 ## Version control
 
@@ -218,6 +229,10 @@ We used the program ruff for linting
 >
 > Answer:
 
+We implemented a small test suite focused on CI-safe behavior. Tests cover the dataset loader using a temporary folder
+with a generated image and train.csv, deterministic seeding, a smoke test that trains for one epoch on tiny synthetic
+data, and an integration-style test that loads a saved model state and runs a forward pass. We avoided tests that
+require downloading data or network access.
 
 ### Question 8
 
@@ -232,7 +247,8 @@ We used the program ruff for linting
 >
 > Answer:
 
---- question 8 fill here ---
+our code coverage is around 75-80 percent, even if it was 100 percent we could of course not be sure it is error free,
+just because every line is run, does not mean every possible error is tested for
 
 ### Question 9
 
@@ -247,7 +263,9 @@ We used the program ruff for linting
 >
 > Answer:
 
-From the start of the project, we alawys worked in branches, and merged into main when we were done with a feature. We setup dependabot to automatically update the dependencies in the project, using pull requests. Using different brannches ensured, that we could work on seperate features at the same time, and not interfere with each other.
+From the start of the project, we alawys worked in branches, and merged into main when we were done with a feature. We
+setup dependabot to automatically update the dependencies in the project, using pull requests. Using different
+brannches ensured, that we could work on seperate features at the same time, and not interfere with each other.
 
 ### Question 10
 
@@ -262,7 +280,9 @@ From the start of the project, we alawys worked in branches, and merged into mai
 >
 > Answer:
 
-We started off using dvc. This was a good choice in the start, since we did not have to locally store 11gb of image files, and could simply run 'dvc pull' to get the data. However, later in the process, when we wanted to train the model using GCP, we realized that GCP has buckets, that are better when training using vertex AI.
+We started off using dvc. This was a good choice in the start, since we did not have to locally store 11gb of image
+files, and could simply run 'dvc pull' to get the data. However, later in the process, when we wanted to train the
+model using GCP, we realized that GCP has buckets, that are better when training using vertex AI.
 
 ### Question 11
 
@@ -279,7 +299,10 @@ We started off using dvc. This was a good choice in the start, since we did not 
 >
 > Answer:
 
---- question 11 fill here ---
+We ended up using hydra and having multiple config files for the project. Using hydra allowed us to change
+hyperparameters 2 ways:
+1. Either using CLI arguments, which is helpful when running a VM.
+2. Changing arguments in the config files, which were nice when running things locally.
 
 ## Running code and tracking experiments
 
@@ -298,9 +321,11 @@ We started off using dvc. This was a good choice in the start, since we did not 
 >
 > Answer:
 
-We ended up using hydra and having multiple config files for the project. Using hydra allowed us to change hyperparameters 2 ways:
-1. Either using CLI arguments, which is helpful when running a VM.
-2. Changing arguments in the config files, which were nice when running things locally.
+We started out using a mix of typer, hydra and argparse. At one point we realized, that these packages offer
+something very close to the same. We ended up using hydra and config files, which proved useful when wanting to save
+hyperparameters, configurations etc. when training the model. To make our scripts the simplest and easiest for new
+users to reproduce, the training script loads the config files for hyperparameters. If a user wants to try out a
+different config, he can change them in the config file.
 
 ### Question 13
 
@@ -315,7 +340,9 @@ We ended up using hydra and having multiple config files for the project. Using 
 >
 > Answer:
 
---- question 13 fill here ---
+To ensure, that our hyperparameters weren't lost, easy to find, we used config files and hydra to load the config
+files. Furthermore we performed training and evaluation in a docker-container. This is done to ensure, that the model
+can be reproduced exactly the same way, on everyones computer.
 
 ### Question 14
 
@@ -332,7 +359,22 @@ We ended up using hydra and having multiple config files for the project. Using 
 >
 > Answer:
 
---- question 14 fill here ---
+In ![reports/images/wandb.png](images/wandb.png) we see the train/loss, train/acc, val/loss and val/acc. When training
+it is essential to track the performance. Specifically we look at the train/loss to see if the model is learning, and
+if the loss is decreasing. Furthermore we track the train/acc. This is also necessary, since a wrong choice of
+loss-function can lead to a model "learning", but not being useful.
+
+If both train/loss and train/acc is getting better, one could make the mistake of thinking that it is a good model.
+However, these metrics do not take overfitting into account, and how generelizable the predictions are. Therefore, we
+have a validation-set, that we a constantly benchmarking against, to see if the model is overfitting or not.
+
+![W&B chart 1](images/W%26B%20Chart%201_23_2026,%203_19_52%20PM.png)
+
+![W&B chart 2](images/W%26B%20Chart%201_23_2026,%203_19_18%20PM.png)
+
+We also looked at the gpu utilization and how much of that time was spent accessing memory, most of the time our GPU
+usage is around 100% which is good, but much of that time is also spent accessing memory, which might mean there is
+room for optimization.
 
 ### Question 15
 
@@ -347,7 +389,18 @@ We ended up using hydra and having multiple config files for the project. Using 
 >
 > Answer:
 
---- question 15 fill here ---
+We used Docker when we preprocessed data and trained the model (defined in our `dockerfiles`). We used Docker as a
+tool to make the training work on all machines, making the project more reproducible. We used GCP's Artifact Registry
+to store Docker images and used Vertex AI to train the model on a T4 GPU.
+
+To run the training via Docker, first build the image with:
+`docker build -f dockerfiles/vertex_train.dockerfile . -t train:latest`
+
+Then run the image with:
+`docker run train:latest`
+
+This will run the training with our predetermined hyperparameters. To change hyperparameters, e.g., the learning
+rate, you can modify the configuration in `configs/train.yaml`.
 
 ### Question 16
 
@@ -362,7 +415,9 @@ We ended up using hydra and having multiple config files for the project. Using 
 >
 > Answer:
 
---- question 16 fill here ---
+We used alot of generative ai chat bots to help with debugging, otherwise we looked at the WandB plots to help see
+what was happening with our experiments and if they were running correctly. We did try using profiling, but did not
+make any major discoveries other then alot of time is spent
 
 ## Working in the cloud
 
@@ -378,9 +433,11 @@ We ended up using hydra and having multiple config files for the project. Using 
 > *We used the following two services: Engine and Bucket. Engine is used for... and Bucket is used for...*
 >
 > Answer:
-We used GCP's buckets for storing the data. We used the GCP compute engine to run the preproccesing. Every script we ran, we made sure to run in docker containers, so that other people can reproduce the results, and have it work on their computers.
 
-For training, we used GCP Vertex AI. Our full training dataset is >80.000 images, so we needed to use a larger VM to train the model.
+Firstly we used GCP's bucket. We uploaded the raw data to the bucket. We locally preprocessed the data, and modified
+the bucket. We then used Vertex AI to train the model. Looking back, it would be possilbe to preprocces data faster
+using one of the VM's that google's compute engine service provides. However due to it not being to costly to
+preprocces data locally, (And the VM's we had acces to were on par with our own PC's), we decided to do it that way.
 
 ### Question 18
 
@@ -394,7 +451,9 @@ For training, we used GCP Vertex AI. Our full training dataset is >80.000 images
 > *using a custom container: ...*
 >
 > Answer:
-While the compute engine is good to use, we only used for preprocessing. We used the GCP Vertex AI for training, since it is a more powerful service, and we needed a larger VM to train the model.
+
+We played around with the compute engine, for some smaller tasks. However, for the big training of the model, we used
+Vertex AI, that indirectly via a docker image and .yaml-file creates a VM, that performs the training.
 
 ### Question 19
 
@@ -403,7 +462,7 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 19 fill here ---
+![GCP bucket](images/bucket.png)
 
 ### Question 20
 
@@ -412,7 +471,7 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 20 fill here ---
+![Artifact registry](images/images.png)
 
 ### Question 21
 
@@ -421,7 +480,7 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 21 fill here ---
+![Cloud build history](images/cloud_build_history.png)
 
 ### Question 22
 
@@ -436,7 +495,17 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 22 fill here ---
+We managed to train our model using vertex AI. While on paper, this is the best way, and it has been a good learning
+experience, we did find both ups and downs. The CLI was very user friendly, and once we had dockerfiles, it was
+fairly easy to start training. The mounting of buckets to vertex AI meant, that we could train with 0 data on our
+local PC's, which was a huge upside. Downsides:
+- New image every time you change the code (we tried automating this, but it still takes time to make this image)
+- You need a vertex dockerfile, vertex .yaml file, which is more complexity. More files in the repo means more
+complexity for new users to understand
+- Stream logs to terminal doesn't work. This costed us hours of labour, to bugfix why the VM didn't show us that it was
+training
+- The VM's where not significantly better than our own PC's
+We used an NVIDIA T4 GPU on the VM N1-standard-8.
 
 ## Deployment
 
@@ -453,7 +522,9 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 23 fill here ---
+We did not put too much time into creating a global API access, and make frontend. We setup a local API, that can be
+accessed via FastAPI, that if more time is put into, one can design frontend and host the API online, for global
+interaction with our model.
 
 ### Question 24
 
@@ -469,7 +540,10 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 24 fill here ---
+We setup API locally. If we wanted to deploy it in the cloud, the process would be seamless since we have already
+containerized the application. We would build the API Docker image defined in `dockerfiles/api.dockerfile`, push it to
+the Google Artifact Registry, and deploy it as a serverless service on Cloud Run. This would provide a HTTPS URL to
+send inference requests to, functioning identically to our local setup.
 
 ### Question 25
 
@@ -484,7 +558,8 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 25 fill here ---
+We did not. If we were to do so, we could make a test of the output (is it binary?), does the server respond, can we
+upload a photo etc.
 
 ### Question 26
 
@@ -499,7 +574,15 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 26 fill here ---
+We did not implement monitoring for a deployed inference service. Monitoring would be important for this project
+because the data distribution is likely to change over time: new generative models and editing tools can produce
+images with different artifacts than the ones in our training set. In practice, we would monitor both model
+performance signals and data drift signals. On the performance side, we would track predicted class confidence, class
+balance over time, latency, and error rates, and—when labels are available—accuracy/precision-recall on a rolling
+window. On the data side, we would run drift tests comparing recent inputs against the training distribution. Alerts
+could trigger when drift exceeds a threshold or when confidence collapses, indicating the model is no longer
+reliable. This would help decide when to retrain, what new data to collect, and whether to roll back or update the
+deployed model.
 
 ## Overall discussion of project
 
@@ -518,7 +601,11 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 27 fill here ---
+Group member 1: David used $1.55. Storage was the most expensive. Group member 2, Oscar, used $1.13. It seemed quite
+practical to be able to develop locally while running and testing code in the cloud. Then we could have several
+models testing at the same time - even when our laptops were turned off. And as long as everything ran inside Docker,
+we knew that it would be reproducible. However, it did take a bit of the development time away from iterating, when we
+had to juggle the cloud and docker as well.
 
 ### Question 28
 
@@ -534,7 +621,7 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 28 fill here ---
+We did not.
 
 ### Question 29
 
@@ -545,13 +632,12 @@ While the compute engine is good to use, we only used for preprocessing. We used
 > Recommended answer length: 200-400 words
 >
 > Example:
->
 > *The starting point of the diagram is our local setup, where we integrated ... and ... and ... into our code.*
 > *Whenever we commit code and push to GitHub, it auto triggers ... and ... . From there the diagram shows ...*
 >
 > Answer:
 
---- question 29 fill here ---
+![Architecture](images/architecture.png)
 
 ### Question 30
 
@@ -565,7 +651,12 @@ While the compute engine is good to use, we only used for preprocessing. We used
 >
 > Answer:
 
---- question 30 fill here ---
+the biggest challenge was by far getting the model to train correclty in the cloud. We ran into issues with getting
+access to GPUs, getting the data uploaded to the cloud, loading data from the correct bucket and making sure the model
+was training correctly. some of these issues were solved by connecting to WandB and getting some more in depth feedback
+then was avalable in the terminal. Otherwise just keep trying for hours was useally what made it work. we also ran in
+to more practical problems with git, not commiting the data, pushing the correct , merging correctly and setting up
+pre-commit.
 
 ### Question 31
 
@@ -581,6 +672,22 @@ While the compute engine is good to use, we only used for preprocessing. We used
 > *Student sXXXXXX was in charge of training our models in the cloud and deploying them afterwards.*
 > *All members contributed to code by...*
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
+>
 > Answer:
 
---- question 31 fill here ---
+**Individual contribution (Nikolaj, s234818):** Nikolaj mainly worked on cleaning up Git issues (ignoring/removing large
+data from commits), stabilizing the repo structure, and setting up code quality automation with pre-commit (Ruff
+lint/format, mypy). He implemented and expanded the test suite (unit tests plus smoke/integration tests) and added
+coverage reporting in CI. He also integrated Weights and Biases logging into training, including hyperparameter
+logging, artifacts for the best checkpoint, and optional torch profiler traces for performance inspection.
+
+**Individual contribution (David, s234817):** I set up the initial project structure using Cookiecutter, configured
+Dependabot for automated dependency updates, implemented initial tests, and assisted with Docker integration for
+reproducible environments. Generative AI tools (e.g., ChatGPT/Copilot) were used sparingly for suggestions and
+troubleshooting, with all outputs reviewed and adapted manually.
+
+**Individual contribution (Oscar, s224177):** Implemented the model, training, and inference. Responsible for creating
+the GCP framework with Docker and Vertex AI, and local API inference with FastAPI.
+
+All group members were included in every part of the development process. We have used ChatGPT, Claude, and Cursor to
+help debug and write some of our code.
