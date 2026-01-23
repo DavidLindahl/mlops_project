@@ -9,6 +9,7 @@ from typing import Any, cast
 import hydra
 import numpy as np
 import torch
+import wandb
 from dotenv import load_dotenv
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
@@ -17,11 +18,10 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from wandb.sdk.wandb_run import Run
 
-import wandb
 from mlops_project.data import MyDataset, NormalizeTransform
 from mlops_project.model import Model
-from wandb.sdk.wandb_run import Run
 
 load_dotenv()
 
