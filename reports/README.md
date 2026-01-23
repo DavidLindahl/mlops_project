@@ -247,8 +247,11 @@ require downloading data or network access.
 >
 > Answer:
 
-our code coverage is around 75-80 percent, even if it was 100 percent we could of course not be sure it is error free,
-just because every line is run, does not mean every possible error is tested for
+Our total code coverage is around 75–80%. Coverage is useful as a sanity check because it shows which parts of the
+code are executed by tests and helps us find untested modules and branches. However, even 100% coverage would not
+guarantee the code is error free, executing a line is not the same as validating correct behavior. Tests can miss
+edge cases, make weak assertions, or fail to cover important branch conditions. Coverage is therefore a guide for
+where to add tests, not a proof of correctness.
 
 ### Question 9
 
