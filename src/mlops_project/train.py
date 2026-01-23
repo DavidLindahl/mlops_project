@@ -121,21 +121,22 @@ def train_model(cfg: DictConfig) -> None:
         target_transform=target_transform,
     )
 
-        train_loader = DataLoader(
-            train_ds,
-            batch_size=cfg.train.batch_size,
-            shuffle=True,
-            num_workers=cfg.data.num_workers,
-            pin_memory=(device.type == "cuda"),
-        )
-        val_loader = DataLoader(
-            val_ds,
-            batch_size=cfg.train.batch_size,
-            shuffle=False,
-            num_workers=cfg.data.num_workers,
-            pin_memory=(device.type == "cuda"),
-        )
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=cfg.train.batch_size,
+        shuffle=True,
+        num_workers=cfg.data.num_workers,
+        pin_memory=(device.type == "cuda"),
+    )
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=cfg.train.batch_size,
+        shuffle=False,
+        num_workers=cfg.data.num_workers,
+        pin_memory=(device.type == "cuda"),
+    )
 
+    try:
         optimizer = Adam(model.parameters(), lr=cfg.train.lr, weight_decay=cfg.train.weight_decay)
         scheduler = StepLR(optimizer, step_size=cfg.train.step_size, gamma=cfg.train.gamma)
         loss_fn = nn.CrossEntropyLoss()

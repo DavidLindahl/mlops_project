@@ -19,7 +19,6 @@ RUN uv venv && \
 COPY configs configs/
 COPY src src/
 COPY README.md README.md
-COPY LICENSE LICENSE
 
 # Install the project
 RUN uv sync --frozen

@@ -1,7 +1,12 @@
 # Vertex AI Custom Job Configuration
-# Submit with: gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" --config=configs/vertex_train_config.yaml
+# Submit with:
+#   export WANDB_API_KEY="your_api_key_here"
+#   gcloud ai custom-jobs create --region=europe-west1 --display-name="mlops_training" \
+#     --config=configs/vertex_train_config.yaml \
+#     --set-env-vars="WANDB_API_KEY=${WANDB_API_KEY}"
 #
 # IMPORTANT: Replace mlops-training-stdne if using a different bucket name!
+# IMPORTANT: Set WANDB_API_KEY environment variable before submitting (see docs)
 
 workerPoolSpecs:
   machineSpec:
@@ -11,6 +16,15 @@ workerPoolSpecs:
   replicaCount: 1
   containerSpec:
     imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-trainer:v1
+    env:
+      # W&B configuration - WANDB_API_KEY is set via --set-env-vars flag
+      # Set these via: export WANDB_API_KEY="your_key" before submitting
+      - name: WANDB_PROJECT
+        value: "mlops_project"
+      - name: WANDB_ENTITY
+        value: "nikolajhj-technical-universty-of-denmark"
+      - name: WANDB_MODE
+        value: "online"
     args:
       # Hydra overrides for GCS paths (use YOUR bucket with processed data)
       - "data.train_dir=/gcs/mlops-training-stdne/processed/train"
