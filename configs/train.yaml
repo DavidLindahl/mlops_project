@@ -1,6 +1,6 @@
 train:
-  batch_size: 8
-  num_epochs: 10
+  batch_size: 32
+  num_epochs: 4
   lr: 1e-3
   weight_decay: 1e-2
   step_size: 1
@@ -11,3 +11,4 @@ train:
 
   wandb: true
   profile: true
+  pretrained: true

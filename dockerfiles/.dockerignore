@@ -14,4 +14,4 @@ reports
 
 # If you ever pull data locally, don't bake it into images:
 data/train_data
-data/test_data_v2
+data/test_data

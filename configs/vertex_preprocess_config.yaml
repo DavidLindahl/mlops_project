@@ -1,0 +1,20 @@
+# Vertex AI Preprocessing Job Configuration
+workerPoolSpecs:
+  machineSpec:
+    machineType: n1-standard-4
+    # No GPU needed for preprocessing
+  replicaCount: 1
+  containerSpec:
+    imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-preprocessor:v1
+    command:
+      - "uv"
+      - "run"
+      - "preprocess"
+    args:
+      # Hydra overrides for GCS paths
+      - "data.data_dir=/gcs/mlops-training-stdne/raw"
+      - "data.processed_dir=/gcs/mlops-training-stdne/processed"
+      - "data.image_size=224"
+      # Optionally limit data for quick testing
+      # - "data.train_limit=1000"
+      # - "data.val_limit=200"

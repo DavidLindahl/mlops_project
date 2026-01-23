@@ -13,27 +13,20 @@ class Model(nn.Module):
     logits for classification (2 classes by default).
     """
 
-    def __init__(
-        self,
-        model_name: str = "tf_efficientnetv2_s.in21k_ft_in1k",
-        num_classes: int = 2,
-        pretrained: bool = False,
-    ) -> None:
+    def __init__(self, *, pretrained: bool = False) -> None:
         """Initialize the model.
 
         Args:
-            model_name: Name of the `timm` model to instantiate.
-            num_classes: Number of output classes for classification.
             pretrained: Whether to load pretrained ImageNet weights. Defaults to
                 False to avoid implicit downloads in offline/CI environments.
         """
         super().__init__()
-        self.model_name = model_name
-        self.num_classes = num_classes
+        self.model_name = "tf_efficientnetv2_s.in21k_ft_in1k"
+        self.num_classes = 2
         self.model: nn.Module = timm.create_model(
-            model_name,
+            self.model_name,
             pretrained=pretrained,
-            num_classes=num_classes,
+            num_classes=self.num_classes,
         )
         self.data_config = resolve_model_data_config(self.model)
 

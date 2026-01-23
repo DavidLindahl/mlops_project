@@ -54,3 +54,10 @@ a [cookiecutter template](https://github.com/cookiecutter/cookiecutter) for gett
 started with Machine Learning Operations (MLOps).
 
 ````
+
+When pushing 
+
+uv run ruff check . --fix
+uv run ruff format .
+uv run mypy .
+uv run pytest
