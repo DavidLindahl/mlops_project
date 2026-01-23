@@ -3,5 +3,4 @@ defaults:
   - train
   - model
   - logging
-  - eval
   - _self_

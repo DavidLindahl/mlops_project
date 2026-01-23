@@ -17,7 +17,7 @@ This guide walks you through transitioning your existing Docker workflow to run 
 4. [Phase 3: Build the Vertex AI Container](#phase-3-build-the-vertex-ai-container)
 5. [Phase 4: Create the Vertex AI Config](#phase-4-create-the-vertex-ai-config)
 6. [Phase 5: Submit Training Jobs](#phase-5-submit-training-jobs)
-7. [Phase 6: Evaluation and Inference](#phase-6-evaluation-and-inference)
+7. [Phase 6: Inference and Promotion](#phase-6-inference-and-promotion)
 8. [Phase 7: Monitoring and Model Artifacts](#phase-7-monitoring-and-model-artifacts)
 9. [Phase 8: Troubleshooting](#phase-8-troubleshooting)
 
@@ -590,76 +590,11 @@ docker run --rm \
 
 ---
 
-## Phase 6: Evaluation and Inference
+## Phase 6: Inference and Promotion
 
-After training, evaluate your model and run inference on test data.
+After training, run inference on test data and promote the best model for serving.
 
-### 6.1 Run Evaluation on Vertex AI (RECOMMENDED)
-
-Create `configs/vertex_eval_config.yaml`:
-
-```yaml
-# Vertex AI Evaluation Job Configuration
-workerPoolSpecs:
-  machineSpec:
-    machineType: n1-standard-4
-    acceleratorType: NVIDIA_TESLA_T4
-    acceleratorCount: 1
-  replicaCount: 1
-  containerSpec:
-    imageUri: europe-west1-docker.pkg.dev/mlops-485010/mlops-training/mlops-trainer:v1
-    command:
-      - "uv"
-      - "run"
-      - "eval"
-    args:
-      # Path to validation/test data
-      - "data.val_dir=/gcs/mlops-training-stdne/processed/val"
-      - "data.val_csv=/gcs/mlops-training-stdne/processed/val.csv"
-      # Specify which training run to evaluate (update this!)
-      - "eval.model_name=2026-01-22/12-30-45"
-      - "eval.output_dir=/gcs/mlops-training-stdne/runs"
-```
-
-**Submit evaluation job:**
-
-```bash
-# After training completes, note the run directory (e.g., 2026-01-22/12-30-45)
-# Update the eval.model_name in the config above, then:
-
-gcloud ai custom-jobs create \
-    --region=europe-west1 \
-    --display-name="mlops_eval_$(date +%Y%m%d_%H%M%S)" \
-    --config=configs/vertex_eval_config.yaml
-```
-
-**View evaluation results:**
-
-```bash
-# Check metrics
-gsutil cat gs://mlops-training-stdne/runs/2026-01-22/12-30-45/eval_metrics.csv
-
-# Download entire evaluation output
-gsutil cp gs://mlops-training-stdne/runs/2026-01-22/12-30-45/eval_metrics.csv ./
-```
-
-### 6.2 Local Evaluation (Alternative)
-
-If you prefer to evaluate locally:
-
-```bash
-# Download the model
-gsutil -m cp -r gs://mlops-training-stdne/runs/2026-01-22/12-30-45/ models/my_model/
-
-# Run evaluation
-uv run eval \
-    eval.model_name=my_model \
-    eval.output_dir=models \
-    data.val_dir=data/processed/val \
-    data.val_csv=data/processed/val.csv
-```
-
-### 6.3 Simple Inference Example
+### 6.1 Simple Inference Example
 
 For single-image inference, your existing `mlops_project` likely has model loading capabilities. Here's a minimal approach:
 
@@ -696,7 +631,7 @@ with torch.no_grad():
 print(f"Predicted class: {pred_class}, Confidence: {confidence:.2%}")
 ```
 
-### 6.4 Promote Model to Production
+### 6.2 Promote Model to Production
 
 After training, promote your best model to a dedicated `models/` folder for API inference:
 
@@ -753,13 +688,11 @@ MODEL_PATH = "/gcs/mlops-training-stdne/models/latest/model.pt"
 MODEL_PATH = "/gcs/mlops-training-stdne/models/v1/model.pt"
 ```
 
-### 6.5 Best Practices
+### 6.3 Best Practices
 
-- ✅ **Run evaluation on Vertex AI** - Same environment as training, reproducible
 - ✅ **Store all artifacts in GCS** - Checkpoints, metrics, predictions
 - ✅ **Version your models** - Use timestamps or run IDs (e.g., `2026-01-22/12-30-45`)
-- ✅ **Track metrics** - Use the CSV outputs from training and evaluation
-- ✅ **Evaluate before deploying** - Always check performance on held-out data
+- ✅ **Validate before deploying** - Spot-check predictions on held-out data
 
 ---
 
@@ -1017,20 +950,7 @@ gcloud ai custom-jobs create \
 gcloud ai custom-jobs list --region=${REGION}
 
 # ============================================
-# 8. Run evaluation
-# ============================================
-# Update eval.model_name in configs/vertex_eval_config.yaml with your run timestamp
-# Then submit evaluation job
-gcloud ai custom-jobs create \
-    --region=${REGION} \
-    --display-name="evaluation_$(date +%Y%m%d_%H%M%S)" \
-    --config=configs/vertex_eval_config.yaml
-
-# Check evaluation metrics
-gsutil cat gs://${BUCKET_NAME}/runs/[DATE]/[TIME]/eval_metrics.csv
-
-# ============================================
-# 9. Download results
+# 8. Download results
 # ============================================
 gsutil -m cp -r gs://${BUCKET_NAME}/runs/[DATE]/[TIME]/ ./results/
 ```
@@ -1081,6 +1001,4 @@ gsutil -m cp -r gs://${BUCKET_NAME}/runs/[DATE]/[TIME]/ ./results/
 11. [ ] Verify processed data in GCS
 12. [ ] Submit training job
 13. [ ] Monitor training progress
-14. [ ] Submit evaluation job after training completes
-15. [ ] Review evaluation metrics
-16. [ ] Download model and results
+14. [ ] Download model and results

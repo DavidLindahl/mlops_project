@@ -49,11 +49,11 @@ class HealthResponse(BaseModel):
     device: str
 
 
-def load_model_from_gcs(model_path: str) -> tuple[Model, NormalizeTransform]:
-    """Load model from GCS path (Vertex AI mounts GCS at /gcs/).
+def load_model(model_path: str) -> tuple[Model, NormalizeTransform]:
+    """Load model from local path.
 
     Args:
-        model_path: Path to model checkpoint (/gcs/bucket/path for Vertex AI, or local path)
+        model_path: Path to model checkpoint (local file path)
 
     Returns:
         Tuple of (model, transform)
@@ -85,16 +85,21 @@ def load_model_from_gcs(model_path: str) -> tuple[Model, NormalizeTransform]:
     return loaded_model, loaded_transform
 
 
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Load model on startup."""
-    global model, transform, device  # noqa: PLW0603 (intended global state)
+def _load_model_if_needed() -> None:
+    """Load model lazily (on first request)."""
+    global model, transform, device
 
-    model_path = os.getenv("MODEL_PATH", "/gcs/mlops-training-stdne/models/latest/model.pt")
+    if model is not None:
+        return
+
+    model_path = os.getenv("MODEL_PATH")
+    if not model_path:
+        raise RuntimeError("MODEL_PATH environment variable not set. Set it to the path of your model file.")
+
     model_version = os.getenv("MODEL_VERSION", "latest")
 
-    logger.info("Starting API with model version: %s", model_version)
-    logger.info("Model path: %s", model_path)
+    logger.info(f"Loading model (version: {model_version})")
+    logger.info(f"Model path: {model_path}")
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -103,11 +108,19 @@ async def startup_event() -> None:
         logger.info("GPU: %s", torch.cuda.get_device_name(0))
 
     try:
-        model, transform = load_model_from_gcs(model_path)
+        model, transform = load_model(model_path)
         logger.info("✅ Model loaded successfully")
     except Exception as err:
         logger.error("❌ Failed to load model: %s", err)
         raise
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Startup event - API is ready, model loads on first request."""
+    logger.info("🚀 API starting...")
+    logger.info("Model will be loaded on first request")
+    logger.info("Set MODEL_PATH environment variable to point to your model file")
 
 
 @app.get("/")

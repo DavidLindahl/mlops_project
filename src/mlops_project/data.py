@@ -69,7 +69,7 @@ class MyDataset(Dataset):
         image_path = self.data_path / img_name
 
         image: Tensor | Image.Image = Image.open(image_path).convert("RGB")
-        label = row.get("label", -1)  # Use -1 for test set without labels
+        label = int(row.get("label", -1))
 
         if self.transform is not None:
             image = self.transform(image)

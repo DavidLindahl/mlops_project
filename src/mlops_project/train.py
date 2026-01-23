@@ -329,11 +329,7 @@ def train_model(cfg: DictConfig) -> None:
         _maybe_stop_profiler(prof)
 
         if run is not None:
-            # Log "what took most time" into the W&B run page
-            if prof is not None:
-                _log_profiler_summary_to_wandb(run, prof)
-
-            # Upload profiler traces if enabled (TensorBoard trace files)
+            # Upload profiler traces if enabled
             if prof_dir is not None and prof_dir.exists():
                 artifact = wandb.Artifact("torch_profiler", type="profile")
                 artifact.add_dir(str(prof_dir))
