@@ -18,7 +18,7 @@ workerPoolSpecs:
       - "data.train_csv=/gcs/mlops-training-stdne/processed/train.csv"
       - "data.val_csv=/gcs/mlops-training-stdne/processed/val.csv"
       # Training parameters
-      - "train.num_epochs=10"
+      - "train.num_epochs=5"
       - "train.batch_size=32"
       # Output directory - saves checkpoints and metrics to YOUR bucket
       - "hydra.run.dir=/gcs/mlops-training-stdne/runs/${now:%Y-%m-%d}/${now:%H-%M-%S}"
