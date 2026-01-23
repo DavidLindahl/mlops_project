@@ -54,6 +54,7 @@ dev = [
     "mkdocs-material==9.7.1",
     "mkdocstrings-python==2.0.1",
     "pillow>=12.1.0",
+    "types-markdown>=3.10.0.20251106",
 ]
 
 
