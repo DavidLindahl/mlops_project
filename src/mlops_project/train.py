@@ -107,6 +107,18 @@ def _log_profiler_summary_to_wandb(run: Run, prof: torch.profiler.profile, *, to
         ],
         data=rows,
     )
+    # Bar chart: top ops by self time
+    metric = "self_cuda_time_total_us" if torch.cuda.is_available() else "self_cpu_time_total_us"
+    run.log(
+        {
+            "profiler/top_ops_bar": wandb.plot.bar(
+                wb_table,
+                label="op",
+                value=metric,
+                title=f"Top ops by {metric}",
+            )
+        }
+    )
     run.log({"profiler/ops_table": wb_table})
 
 
