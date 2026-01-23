@@ -74,6 +74,55 @@ def _maybe_stop_profiler(prof: torch.profiler.profile | None) -> None:
         prof.__exit__(None, None, None)
 
 
+def _log_profiler_summary_to_wandb(run: Run, prof: torch.profiler.profile, *, top_k: int = 30) -> None:
+    """Log 'what took the most time' from torch.profiler directly into W&B."""
+    # Prefer CUDA timing if available; otherwise CPU timing.
+    sort_by = "self_cuda_time_total" if torch.cuda.is_available() else "self_cpu_time_total"
+
+    # Human-readable table (shows up nicely as a panel in W&B)
+    table_str = prof.key_averages().table(sort_by=sort_by, row_limit=top_k)
+    run.log({"profiler/top_ops": wandb.Html(f"<pre>{table_str}</pre>")})
+
+    # Structured table (lets you sort/filter in W&B UI)
+    rows: list[list[Any]] = []
+    for evt in prof.key_averages():
+        rows.append(
+            [
+                evt.key,
+                int(getattr(evt, "count", 0)),
+                float(getattr(evt, "self_cpu_time_total", 0.0)),
+                float(getattr(evt, "cpu_time_total", 0.0)),
+                float(getattr(evt, "self_cuda_time_total", 0.0)),
+                float(getattr(evt, "cuda_time_total", 0.0)),
+            ]
+        )
+
+    wb_table = wandb.Table(
+        columns=[
+            "op",
+            "count",
+            "self_cpu_time_total_us",
+            "cpu_time_total_us",
+            "self_cuda_time_total_us",
+            "cuda_time_total_us",
+        ],
+        data=rows,
+    )
+    # Bar chart: top ops by self time
+    metric = "self_cuda_time_total_us" if torch.cuda.is_available() else "self_cpu_time_total_us"
+    run.log(
+        {
+            "profiler/top_ops_bar": wandb.plot.bar(
+                wb_table,
+                label="op",
+                value=metric,
+                title=f"Top ops by {metric}",
+            )
+        }
+    )
+    run.log({"profiler/ops_table": wb_table})
+
+
 def train_model(cfg: DictConfig) -> None:
     """Train a 2-class timm classifier on the dataset in `data/raw`."""
     run_dir = Path(HydraConfig.get().runtime.output_dir)
