@@ -1,0 +1,3 @@
+eval:
+  model_name: ""
+  output_dir: models

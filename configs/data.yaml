@@ -1,6 +1,14 @@
 data:
-  data_dir: data
-  train_csv: train.csv
-  test_csv: test.csv
-  limit: 100
+  data_dir: data/raw
+  processed_dir: data/processed
+  train_csv: data/processed/train.csv
+  val_csv: data/processed/val.csv
+  test_csv: data/processed/test.csv
+  train_dir: data/processed/train
+  val_dir: data/processed/val
+  test_dir: data/processed/test
+  train_limit: 50000
+  val_limit: 7000
+  test_limit: 7000
   num_workers: 0
+  image_size: 224

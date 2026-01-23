@@ -34,6 +34,9 @@ dependencies = [
     "torchvision==0.20.1",
     "typer==0.21.1",
     "uvicorn==0.34.0",
+    "pip>=25.3",
+    "google-api-python-client>=2.188.0",
+    "dvc-gs>=3.0.2",
     "wandb>=0.24.0",
     "python-dotenv>=1.2.1",
 ]
@@ -69,6 +72,7 @@ explicit = true
 train = "mlops_project.train:main"
 data = "mlops_project.data:main"
 eval = "mlops_project.evaluate:main"
+preprocess = "mlops_project.preprocess:main"
 
 [tool.ruff]
 line-length = 120

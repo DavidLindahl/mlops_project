@@ -1,3 +1,4 @@
-/train_data
-/test_data
 raw/
+processed/
+train_data/
+test_data/
