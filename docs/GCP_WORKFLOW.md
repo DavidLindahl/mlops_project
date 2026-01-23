@@ -68,27 +68,24 @@ make list-runs DATE=2026-01-23
 
 **What it does**: Copies `best_model.pt` from the run to:
 - `gs://mlops-training-stdne/models/<VERSION>/model.pt` (versioned)
-- `gs://mlops-training-stdne/models/latest/model.pt` (for API)
+- `gs://mlops-training-stdne/models/latest/model.pt` (for local API)
 
-### 5. Deploy Model as API
+### 5. Run API Locally
 
 ```bash
-# Deploy API with promoted model
-make deploy-api MODEL_VERSION=v1
+# Download model
+gsutil cp gs://mlops-training-stdne/models/latest/model.pt ./model.pt
 
-# Get endpoint ID and URL
-export ENDPOINT_ID=$(gcloud ai endpoints list --region=europe-west1 --filter="displayName:mlops-api-endpoint" --format="value(name)" --limit=1)
-export API_URL=https://$ENDPOINT_ID-prediction.europe-west1-aiplatform.google.com
+# Run API locally
+export MODEL_PATH=./model.pt
+uv run uvicorn mlops_project.api:app --reload --port 8000
 
 # Test with CLI tool
-uv run inference path/to/images/
-
-# Or test manually (requires authentication)
-curl -H "Authorization: Bearer $(gcloud auth print-access-token)" $API_URL/health
-curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -X POST -F "file=@test_image.jpg" $API_URL/predict
+export API_URL=http://localhost:8000
+uv run inference data/processed/test/
 ```
 
-See [API Deployment Guide](API_DEPLOYMENT.md) for complete documentation.
+See [Local API Guide](API_DEPLOYMENT.md) for complete documentation.
 
 ## Common Operations
 
