@@ -6,6 +6,7 @@ import io
 import logging
 import os
 from pathlib import Path
+from typing import Annotated
 
 import torch
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -57,51 +58,55 @@ def load_model_from_gcs(model_path: str) -> tuple[Model, NormalizeTransform]:
     Returns:
         Tuple of (model, transform)
     """
-    logger.info(f"Loading model from: {model_path}")
+    logger.info("Loading model from: %s", model_path)
 
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Model not found at {model_path}")
 
     checkpoint = torch.load(model_path, map_location=device, weights_only=False)
 
-    model = Model(pretrained=False).to(device)
-    model.load_state_dict(checkpoint["state_dict"])
-    model.eval()
+    loaded_model = Model(pretrained=False).to(device)
+    loaded_model.load_state_dict(checkpoint["state_dict"])
+    loaded_model.eval()
 
-    data_config = model.data_config
-    transform = NormalizeTransform(
+    data_config = loaded_model.data_config
+    loaded_transform = NormalizeTransform(
         mean=list(data_config["mean"]),
         std=list(data_config["std"]),
     )
 
-    logger.info(f"Model loaded successfully. Input size: {data_config['input_size']}")
-    logger.info(f"Checkpoint info - Epoch: {checkpoint.get('epoch', 'N/A')}, Val Acc: {checkpoint.get('val_acc', 'N/A')}")
+    logger.info("Model loaded successfully. Input size: %s", data_config["input_size"])
+    logger.info(
+        "Checkpoint info - Epoch: %s, Val Acc: %s",
+        checkpoint.get("epoch", "N/A"),
+        checkpoint.get("val_acc", "N/A"),
+    )
 
-    return model, transform
+    return loaded_model, loaded_transform
 
 
 @app.on_event("startup")
 async def startup_event() -> None:
     """Load model on startup."""
-    global model, transform, device
+    global model, transform, device  # noqa: PLW0603 (intended global state)
 
     model_path = os.getenv("MODEL_PATH", "/gcs/mlops-training-stdne/models/latest/model.pt")
     model_version = os.getenv("MODEL_VERSION", "latest")
 
-    logger.info(f"Starting API with model version: {model_version}")
-    logger.info(f"Model path: {model_path}")
+    logger.info("Starting API with model version: %s", model_version)
+    logger.info("Model path: %s", model_path)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
-    logger.info(f"Using device: {device}")
+    logger.info("Using device: %s", device)
     if use_cuda:
-        logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
+        logger.info("GPU: %s", torch.cuda.get_device_name(0))
 
     try:
         model, transform = load_model_from_gcs(model_path)
         logger.info("✅ Model loaded successfully")
-    except Exception as e:
-        logger.error(f"❌ Failed to load model: {e}")
+    except Exception as err:
+        logger.error("❌ Failed to load model: %s", err)
         raise
 
 
@@ -130,7 +135,7 @@ async def health() -> HealthResponse:
 
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict(file: UploadFile = File(...)) -> PredictionResponse:
+async def predict(file: Annotated[UploadFile, File(...)]) -> PredictionResponse:
     """Predict if image is AI-generated or human-generated.
 
     Args:
@@ -145,7 +150,7 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
     if model is None or transform is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
-    if file.content_type not in ["image/jpeg", "image/jpg", "image/png"]:
+    if file.content_type not in {"image/jpeg", "image/jpg", "image/png"}:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Only JPEG/PNG supported.",
@@ -169,7 +174,7 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
         label_map = {0: "human", 1: "ai"}
         label = label_map.get(pred_class, "unknown")
 
-        logger.info(f"Prediction: {label} (confidence: {confidence:.2%})")
+        logger.info("Prediction: %s (confidence: %.2f%%)", label, confidence * 100)
 
         return PredictionResponse(
             prediction=pred_class,
@@ -178,9 +183,9 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
             model_version=os.getenv("MODEL_VERSION", "latest"),
         )
 
-    except Exception as e:
-        logger.error(f"Prediction error: {e}")
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+    except Exception as err:
+        logger.error("Prediction error: %s", err)
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {err}") from err
 
 
 if __name__ == "__main__":

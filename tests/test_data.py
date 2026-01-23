@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from mlops_project.data import MyDataset, TimmImageTransform
+from mlops_project.data import MyDataset, NormalizeTransform
 from PIL import Image
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -37,7 +37,7 @@ def test_my_dataset_limit(tmp_path: Path) -> None:
 
 def test_timm_image_transform_shape_dtype() -> None:
     img = Image.new("RGB", (11, 13), color=(255, 255, 255))
-    transform = TimmImageTransform(image_size=8, mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])
+    transform = NormalizeTransform(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])
 
     x = transform(img)
     assert isinstance(x, Tensor)
@@ -51,7 +51,7 @@ def test_timm_image_transform_shape_dtype() -> None:
 def test_my_dataset_applies_transform_and_target_transform(tmp_path: Path) -> None:
     _write_dummy_dataset(tmp_path, n=1)
 
-    transform = TimmImageTransform(image_size=8, mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])
+    transform = NormalizeTransform(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])
     target_transform = lambda y: int(y) + 1  # noqa: E731
 
     dataset = MyDataset(tmp_path, transform=transform, target_transform=target_transform)
