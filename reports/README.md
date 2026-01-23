@@ -378,8 +378,9 @@ We ended up using hydra and having multiple config files for the project. Using 
 > *We used the following two services: Engine and Bucket. Engine is used for... and Bucket is used for...*
 >
 > Answer:
+We used GCP's buckets for storing the data. We used the GCP compute engine to run the preproccesing. Every script we ran, we made sure to run in docker containers, so that other people can reproduce the results, and have it work on their computers.
 
---- question 17 fill here ---
+For training, we used GCP Vertex AI. Our full training dataset is >80.000 images, so we needed to use a larger VM to train the model.
 
 ### Question 18
 
@@ -393,8 +394,7 @@ We ended up using hydra and having multiple config files for the project. Using 
 > *using a custom container: ...*
 >
 > Answer:
-
---- question 18 fill here ---
+While the compute engine is good to use, we only used for preprocessing. We used the GCP Vertex AI for training, since it is a more powerful service, and we needed a larger VM to train the model.
 
 ### Question 19
 
