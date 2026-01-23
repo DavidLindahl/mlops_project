@@ -43,7 +43,10 @@ RUN uv pip install --system --no-cache \
     numpy>=1.25.2 \
     omegaconf \
     wandb>=0.24.0 \
-    python-dotenv>=1.2.1
+    python-dotenv>=1.2.1 \
+    fastapi==0.115.6 \
+    uvicorn==0.34.0 \
+    requests>=2.31.0
 
 # Copy source code and configs
 COPY configs configs/

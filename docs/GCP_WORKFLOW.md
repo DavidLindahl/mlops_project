@@ -56,28 +56,39 @@ gcloud ai custom-jobs stream-logs <JOB_ID> --region=europe-west1
 ### 4. Promote Model to Production
 
 ```bash
-# List available training runs
-make list-runs
+# Promote latest model automatically (recommended)
+make promote-model VERSION=v1
 
-# Promote a specific run (auto-sets as latest)
+# Or promote a specific run
 make promote-model RUN=2026-01-23/10-47-37 VERSION=v1
 
-# Or let it auto-generate version from date
-make promote-model RUN=2026-01-23/10-47-37
+# List available runs to see what's available
+make list-runs DATE=2026-01-23
 ```
 
 **What it does**: Copies `best_model.pt` from the run to:
 - `gs://mlops-training-stdne/models/<VERSION>/model.pt` (versioned)
 - `gs://mlops-training-stdne/models/latest/model.pt` (for API)
 
-### 5. Use Model in API
+### 5. Deploy Model as API
 
-```python
-# In your API code
-MODEL_PATH = "/gcs/mlops-training-stdne/models/latest/model.pt"
-# Or use versioned:
-MODEL_PATH = "/gcs/mlops-training-stdne/models/v1/model.pt"
+```bash
+# Deploy API with promoted model
+make deploy-api MODEL_VERSION=v1
+
+# Get endpoint ID and URL
+export ENDPOINT_ID=$(gcloud ai endpoints list --region=europe-west1 --filter="displayName:mlops-api-endpoint" --format="value(name)" --limit=1)
+export API_URL=https://$ENDPOINT_ID-prediction.europe-west1-aiplatform.google.com
+
+# Test with CLI tool
+uv run inference path/to/images/
+
+# Or test manually (requires authentication)
+curl -H "Authorization: Bearer $(gcloud auth print-access-token)" $API_URL/health
+curl -H "Authorization: Bearer $(gcloud auth print-access-token)" -X POST -F "file=@test_image.jpg" $API_URL/predict
 ```
+
+See [API Deployment Guide](API_DEPLOYMENT.md) for complete documentation.
 
 ## Common Operations
 
@@ -109,67 +120,3 @@ gsutil ls gs://mlops-training-stdne/models/
 # Download a model locally
 gsutil cp gs://mlops-training-stdne/models/latest/model.pt ./model.pt
 ```
-
-### Rebuild After Code Changes
-
-```bash
-# After changing code/configs, rebuild and push
-make push-train TAG=v1
-
-# Or use a new tag to keep old version
-make push-train TAG=v2
-
-# Update configs/vertex_train_config.yaml to use new tag if needed
-```
-
-## Configuration
-
-Default values (can override in Makefile or as env vars):
-
-- `PROJECT_ID=mlops-485010`
-- `REGION=europe-west1`
-- `REPO_NAME=mlops-training`
-- `BUCKET=gs://mlops-training-stdne`
-- `TAG=v1`
-
-Override on command line:
-```bash
-make push-train TAG=v2 PROJECT_ID=my-project
-```
-
-## Troubleshooting
-
-**Job fails immediately**: Check Docker image exists and config paths are correct.
-
-**GPU quota exceeded**: Request quota increase or use CPU-only training.
-
-**Model not found when promoting**: Verify run path exists with `make list-runs`.
-
-**Build fails on Apple Silicon**: Makefile already uses `--platform linux/amd64`, should work.
-
-## Full Workflow Example
-
-```bash
-# 1. Build images (first time or after code changes)
-make push-train TAG=v1
-make push-preprocess TAG=v1
-
-# 2. Preprocess data
-make submit-preprocess
-# Wait for completion, check logs
-
-# 3. Train model
-make submit-train
-# Monitor in W&B or logs
-
-# 4. Promote best model
-make list-runs
-make promote-model RUN=2026-01-23/14-30-15 VERSION=v1
-
-# 5. Use in API
-# MODEL_PATH = "/gcs/mlops-training-stdne/models/latest/model.pt"
-```
-
----
-
-For initial setup, see `GCP_VERTEX_AI_SETUP.md`.

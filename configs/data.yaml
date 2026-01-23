@@ -7,8 +7,8 @@ data:
   train_dir: data/processed/train
   val_dir: data/processed/val
   test_dir: data/processed/test
-  train_limit: 50000
-  val_limit: 7000
+  train_limit: 10
+  val_limit: 10
   test_limit: 7000
   num_workers: 4
   image_size: 224
